@@ -60,7 +60,7 @@ one appears.
    that could. If you are on the default branch, create a branch first.
 2. **Prove it.** Get proof for every change you made. See "Proof".
 3. **Get feedback.** Use the `sol-loop` skill to verify changes.
-4. **File the PR** with the `file-pr` skill. Rebase onto the latest default
+4. **File the PR** with the `pr` skill. Rebase onto the latest default
    branch first. Add one short line to the description that says how you proved
    the change.
 5. **Babysit the PR** with the `babysit-pr` skill. Fix real findings and CI

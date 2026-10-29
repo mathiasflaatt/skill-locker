@@ -11,7 +11,6 @@ Most skills in this repo are copies of work by other authors. Each copy keeps it
 | `codebase-design` | Matt Pocock | [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/engineering/codebase-design) | MIT | no |
 | `diagnosing-bugs` | Matt Pocock | [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/engineering/diagnosing-bugs) | MIT | no |
 | `domain-modeling` | Matt Pocock | [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/engineering/domain-modeling) | MIT | no |
-| `file-pr` | Theo Browne | [t3dotgg/tstack](https://github.com/t3dotgg/tstack/tree/main/skills/file-pr) | MIT | yes |
 | `full-send` | Theo Browne | [t3dotgg/tstack](https://github.com/t3dotgg/tstack/tree/main/skills/full-send) | MIT | yes |
 | `full-stop` | Theo Browne | [t3dotgg/tstack](https://github.com/t3dotgg/tstack/tree/main/skills/full-stop) | MIT | yes |
 | `grilling` | Matt Pocock | [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/productivity/grilling) | MIT | yes |
@@ -20,16 +19,15 @@ Most skills in this repo are copies of work by other authors. Each copy keeps it
 | `improve-codebase-architecture` | Matt Pocock | [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/engineering/improve-codebase-architecture) | MIT | no |
 | `lavish` | Kun Chen | [kunchenguid/lavish-axi](https://github.com/kunchenguid/lavish-axi/tree/main/skills/lavish) | MIT | no |
 | `leaving-pr-comments` | Theo Browne | [t3dotgg/tstack](https://github.com/t3dotgg/tstack/tree/main/skills/leaving-pr-comments) | MIT | no |
-| `modernize` | Theo Browne | [t3dotgg/tstack](https://github.com/t3dotgg/tstack/tree/main/skills/modernize) | MIT | no |
-| `orca-cli` | Lovecast Inc. (Orca) | [stablyai/orca](https://github.com/stablyai/orca/tree/main/skills/orca-cli) | MIT | no |
-| `orchestration` | Lovecast Inc. (Orca) | [stablyai/orca](https://github.com/stablyai/orca/tree/main/skills/orchestration) | MIT | no |
-| `pr` | Matt Pocock | [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/engineering/pr) | MIT | yes |
+| `modernize` | Theo Browne | [t3dotgg/tstack](https://github.com/t3dotgg/tstack/tree/main/skills/modernize) | MIT | yes |
+| `orca-cli` | Lovecast Inc. (Orca) | [stablyai/orca](https://github.com/stablyai/orca/tree/main/skills/orca-cli) | MIT | yes |
+| `pr` | Matt Pocock; filing steps from `file-pr` by Theo Browne; visuals from `show-me` by Dex Horthy | [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/engineering/pr), [t3dotgg/tstack](https://github.com/t3dotgg/tstack/tree/main/skills/file-pr) | MIT | yes |
 | `prototype` | Matt Pocock | [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/engineering/prototype) | MIT | no |
 | `research` | Matt Pocock | [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/engineering/research) | MIT | no |
 | `resolving-merge-conflicts` | Matt Pocock | [mattpocock/skills](https://github.com/mattpocock/skills/tree/153fc1b/skills/engineering/resolving-merge-conflicts) (since removed upstream) | MIT | no |
 | `retro` | Matt Pocock | [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/engineering/retro) | MIT | no |
 | `sol-loop` | Theo Browne | [t3dotgg/tstack](https://github.com/t3dotgg/tstack/tree/main/skills/sol-loop) | MIT | yes |
-| `takeover` | Theo Browne | [t3dotgg/tstack](https://github.com/t3dotgg/tstack/tree/main/skills/takeover) | MIT | no |
+| `takeover` | Theo Browne | [t3dotgg/tstack](https://github.com/t3dotgg/tstack/tree/main/skills/takeover) | MIT | yes |
 | `tdd` | Matt Pocock | [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/engineering/tdd) | MIT | no |
 | `teach` | Matt Pocock | [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/productivity/teach) | MIT | no |
 | `to-spec` | Matt Pocock | [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/engineering/to-spec) | MIT | yes |

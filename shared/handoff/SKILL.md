@@ -1,8 +1,7 @@
 ---
 name: handoff
-description: Hand off one thread of this conversation to a fresh agent session in the same worktree.
+description: Hand off one thread of this conversation to a fresh agent session. Use when the user says "handoff", "handover", or "give this to another agent".
 argument-hint: "Which part of the conversation moves to the new session?"
-disable-model-invocation: true
 ---
 
 Move one **thread** of this conversation (the part the user names) into a new agent session in the same worktree. This session keeps the rest.
@@ -18,8 +17,9 @@ Move one **thread** of this conversation (the part the user names) into a new ag
 
    Redact secrets and personal data. Done when a fresh agent with no chat history can take the next step from the brief alone.
 
-3. **Start the new session** in the same worktree, with the agent CLI this session runs on (`copilot -i '<prompt>'`, `claude '<prompt>'`, `codex '<prompt>'`). The prompt: `Read /tmp/handoff-<slug>.md and continue that work.`
-   - In an Orca terminal (`ORCA_TERMINAL_HANDLE` is set; resolve the executable as the `orca-cli` skill says): `orca terminal create --worktree active --title "<slug>" --command "<agent command>" --json`.
-   - Otherwise, print the command for the user to run in a new terminal at the worktree root.
+3. **Start the new session** in the same worktree, with the agent CLI this session runs on (`copilot -i '<prompt>'`, `claude '<prompt>'`, `codex '<prompt>'`). The prompt: `Read /tmp/handoff-<slug>.md and continue that work.` Use the first route that applies:
+   - **Orca** (`ORCA_TERMINAL_HANDLE` is set): call the Skill tool for `orca-cli` to resolve the executable, then run `<orca> terminal create --worktree active --title "<slug>" --command "<agent command>" --json`.
+   - **tmux** (`TMUX` is set): `tmux new-window -c "<worktree root>" -n "<slug>" '<agent command>'`.
+   - **Otherwise**: print the `cd <worktree root> && <agent command>` line for the user to run in a new terminal. Do not start the agent as a background process: the user cannot talk to it.
 
 4. **Close the thread here.** Report the brief path and the new terminal, then drop the thread from this session's plan.
