@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "hooks": {
+    "preToolUse": [
+      {
+        "type": "command",
+        "bash": "$HOME/.agents/hooks/no-main-merge.sh",
+        "timeoutSec": 15
+      }
+    ]
+  }
+}
