@@ -1,0 +1,164 @@
+/* paper.css: the user's Lavish house style. Tufte-like, light, prints well.
+   Block vocabulary adapted from rodlandA/claude-workflow-kit `explaining-visually` (MIT).
+   Copy next to the artifact HTML and link it: <link rel="stylesheet" href="paper.css"> */
+:root {
+  --ink: #1d232b; --muted: #5b6573; --rule: #d9dee5; --line: #c9cfd8; --paper: #fffff8; --card: #ffffff;
+  --accent: #8a1c1c; --accent-bg: #f7ecea;
+  --new: #1f6f3f; --new-bg: #e6f3ea;
+  --changed: #8a5a00; --changed-bg: #fbf1dc;
+  --removed: #a12a2a; --removed-bg: #f8e4e4;
+  --info: #2f5f8f; --info-bg: #eef3f8;
+  --note: #f3f0e2; --code: #f2f2ea;
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", Consolas, Menlo, monospace;
+  color-scheme: light;
+}
+*, *::before, *::after { box-sizing: border-box; }
+:where(.cols, .flow, .tldr, .options) > * { min-width: 0; }
+:where(p, li, td, th, .badge, label, .box) { overflow-wrap: anywhere; }
+html { font-size: 18px; background: var(--paper); }
+body { margin: 0 auto; padding: 2.5rem 1.25rem 4rem; max-width: 50rem;
+  background: var(--paper); color: var(--ink); font-family: var(--serif); line-height: 1.55; }
+body.wide { max-width: 66rem; }
+
+/* Text */
+.kicker { font: 600 .7rem var(--sans); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 0; }
+h1 { font-weight: 400; font-size: 2.1rem; line-height: 1.2; margin: .3rem 0 .5rem; }
+h2 { font-weight: 400; font-style: italic; font-size: 1.4rem; margin: 2.6rem 0 .8rem; border-bottom: 1px solid var(--rule); padding-bottom: .25rem; }
+h3 { font-weight: 600; font-size: 1rem; margin-top: 1.5rem; }
+h4 { margin: 0 0 .5rem; font: 600 .68rem var(--sans); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.lede { font-size: 1.15rem; color: var(--muted); margin: 0 0 1.6rem; max-width: 40rem; }
+a { color: var(--accent); }
+small, .muted { color: var(--muted); }
+ul, ol { padding-left: 1.3rem; }
+li + li { margin-top: .25rem; }
+code, pre, kbd { font-family: var(--mono); font-size: .78rem; }
+code { background: var(--code); padding: 0 .25em; border-radius: 3px; }
+pre { background: var(--code); padding: .8rem 1rem; overflow-x: auto; border-radius: 4px; line-height: 1.4; }
+pre code { background: none; padding: 0; }
+.cite { font: .7rem var(--mono); color: var(--muted); }
+.sidenote { font-size: .8rem; color: var(--muted); border-left: 2px solid var(--rule); padding-left: .8rem; margin: .8rem 0; }
+
+/* TL;DR cards: Why / What changes / Size */
+.tldr { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); gap: .7rem; list-style: none; padding: 0; margin: 0 0 2rem; }
+.tldr li { margin: 0; background: var(--note); border-radius: 6px; padding: .8rem 1rem; font-size: .9rem; line-height: 1.4; }
+.tldr li b { display: block; font: 600 .66rem var(--sans); letter-spacing: .1em; text-transform: uppercase; color: var(--accent); margin-bottom: .2rem; }
+
+/* Boxes and flows: the main diagram tool */
+.flow { display: flex; align-items: center; flex-wrap: wrap; gap: .4rem; margin: 1rem 0; }
+.flow:not(:has(> .arrow)) { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 11rem), 1fr)); gap: .5rem; align-items: stretch; }
+.flow.v { flex-direction: column; align-items: stretch; }
+.flow.v > .arrow { align-self: flex-start; padding-left: 1rem; flex-direction: row; gap: .4rem; max-width: none; text-align: left; }
+.box { font-family: var(--sans); background: var(--card); border: 1.5px solid var(--line); border-radius: 8px; padding: .55rem .8rem; flex: 0 1 auto; }
+.box b { display: block; font-size: .8rem; font-weight: 600; }
+.box small { display: block; font-size: .72rem; line-height: 1.35; }
+.box code { display: inline-block; margin-top: .25rem; font-size: .66rem; }
+.box.new, .step.new { border-color: var(--new); background: var(--new-bg); }
+.box.changed, .step.changed { border-color: var(--changed); background: var(--changed-bg); }
+.box.removed, .step.removed { border-color: var(--removed); background: var(--removed-bg); }
+.box.removed b { text-decoration: line-through; text-decoration-color: var(--removed); }
+.box.focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg); }
+.box.muted { border-style: dashed; color: var(--muted); }
+.arrow { display: flex; flex-direction: column; align-items: center; color: var(--muted); font: .66rem/1.2 var(--sans); min-width: 2.6rem; max-width: 7rem; text-align: center; }
+.arrow::after { content: "\2192"; font-size: 1.15rem; line-height: 1; color: var(--accent); }
+.flow.v > .arrow::after { content: "\2193"; order: -1; }
+@media (max-width: 40rem) { .flow:has(> .arrow) { flex-direction: column; align-items: stretch; }
+  .flow > .arrow { align-self: flex-start; padding-left: 1rem; flex-direction: row; gap: .4rem; max-width: none; text-align: left; } .flow > .arrow::after { content: "\2193"; order: -1; } }
+
+/* Columns: Before / After, option A / B */
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: 1rem; margin: 1rem 0; }
+.col { background: var(--card); border: 1px solid var(--rule); border-radius: 8px; padding: .8rem 1rem; }
+.col > .flow { margin: .4rem 0 0; }
+.col > :last-child { margin-bottom: 0; }
+.legend { display: flex; flex-wrap: wrap; gap: 1rem; font: .7rem var(--sans); color: var(--muted); margin: .3rem 0 .6rem; }
+.legend span::before { content: ""; display: inline-block; width: .6rem; height: .6rem; border-radius: 2px; margin-right: .35rem; vertical-align: -1px; border: 1.5px solid var(--line); }
+.legend .new::before { border-color: var(--new); background: var(--new-bg); }
+.legend .changed::before { border-color: var(--changed); background: var(--changed-bg); }
+.legend .removed::before { border-color: var(--removed); background: var(--removed-bg); }
+
+/* Steps: one commit-sized step each */
+.steps { counter-reset: s; list-style: none; padding: 0; display: grid; gap: .5rem; margin: 1rem 0; }
+.steps > li { margin: 0; }
+.step { counter-increment: s; position: relative; background: var(--card); border: 1px solid var(--rule); border-radius: 8px; padding: .6rem .9rem .6rem 2.8rem; font-family: var(--sans); font-size: .85rem; }
+.step::before { content: counter(s); position: absolute; left: .75rem; top: .6rem; width: 1.4rem; height: 1.4rem; border-radius: 50%;
+  background: var(--accent); color: #fff; font: 600 .7rem/1.4rem var(--sans); text-align: center; }
+.step b { display: block; }
+.step small { display: block; font-size: .78rem; }
+
+/* Callouts: trap, decision, question, ok */
+.callout { border-left: 3px solid var(--info); background: var(--info-bg); border-radius: 0 6px 6px 0; padding: .7rem 1rem; margin: 1rem 0; font-size: .92rem; }
+.callout > b:first-child { display: block; font: 600 .66rem var(--sans); letter-spacing: .1em; text-transform: uppercase; margin-bottom: .15rem; color: var(--info); }
+.callout.trap { border-color: var(--removed); background: var(--removed-bg); } .callout.trap > b:first-child { color: var(--removed); }
+.callout.decision { border-color: var(--accent); background: var(--accent-bg); } .callout.decision > b:first-child { color: var(--accent); }
+.callout.question { border-color: var(--changed); background: var(--changed-bg); } .callout.question > b:first-child { color: var(--changed); }
+.callout.ok { border-color: var(--new); background: var(--new-bg); } .callout.ok > b:first-child { color: var(--new); }
+.callout > :last-child { margin-bottom: 0; }
+
+/* Badges */
+.badge { display: inline-block; font: 600 .66rem var(--sans); letter-spacing: .04em; padding: .1rem .5rem; border-radius: 999px;
+  border: 1px solid var(--rule); background: var(--card); color: var(--muted); vertical-align: middle; }
+.badge.accent { color: var(--accent); background: var(--accent-bg); border-color: transparent; }
+.badge.new { color: var(--new); background: var(--new-bg); border-color: transparent; }
+.badge.changed { color: var(--changed); background: var(--changed-bg); border-color: transparent; }
+.badge.removed { color: var(--removed); background: var(--removed-bg); border-color: transparent; }
+
+/* Tables */
+table { border-collapse: collapse; width: 100%; margin: 1rem 0; font: .82rem var(--sans); }
+th, td { border-bottom: 1px solid var(--rule); padding: .4rem .5rem; text-align: left; vertical-align: top; }
+th { font-weight: 600; border-bottom: 2px solid var(--ink); }
+table.files td:first-child code { overflow-wrap: anywhere; word-break: break-word; }
+
+/* Depth on demand: <details class="more"><summary>Why not X?</summary>…</details> */
+details.more { margin: .4rem 0 1rem; border: 1px dashed var(--line); border-radius: 6px; padding: .3rem .8rem; background: var(--card); font-size: .88rem; }
+details.more > summary { cursor: pointer; font: 600 .75rem var(--sans); color: var(--accent); }
+details.more[open] { padding-bottom: .7rem; }
+/* Chrome keeps layout boxes for closed <details> content; drop them so layout checks see no overlap. */
+details:not([open]) > :not(summary) { display: none; }
+details:not(.more) { border-top: 1px solid var(--rule); padding: .5rem 0; }
+details:not(.more) > summary { cursor: pointer; font-weight: 600; }
+
+/* Questions (Lavish input playbook): one form per question */
+.question { border: 1px solid var(--accent); border-radius: 8px; padding: 1rem 1.2rem; margin: 1.2rem 0; background: var(--card); box-shadow: 0 1px 0 var(--accent-bg); }
+.question legend, .question .q { font-weight: 600; margin-bottom: .3rem; padding: 0; }
+.question .why { font-size: .85rem; color: var(--muted); margin: 0 0 .7rem; }
+fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.options { display: grid; gap: .5rem; }
+.option { display: block; border: 1px solid var(--rule); border-radius: 6px; padding: .55rem .8rem .55rem 2.2rem; position: relative;
+  cursor: pointer; background: var(--card); font-family: var(--sans); font-size: .85rem; transition: border-color .12s, background .12s; }
+.option:hover { border-color: var(--muted); }
+.option > input { position: absolute; left: .8rem; top: .8rem; margin: 0; }
+.option:has(input:checked) { border-color: var(--accent); background: var(--accent-bg); }
+.option .title { font-weight: 600; }
+.option .detail { display: block; font-size: .78rem; color: var(--muted); }
+.option.rec .title::after { content: "recommended"; margin-left: .5rem; font: 600 .62rem var(--sans); letter-spacing: .03em;
+  color: var(--new); background: var(--new-bg); padding: .05rem .45rem; border-radius: 999px; vertical-align: middle; }
+input[type="text"], input[type="number"], input:not([type]), textarea, select {
+  font: .88rem var(--sans); color: var(--ink); background: var(--card); width: 100%; border: 1px solid var(--rule); border-radius: 4px; padding: .45rem .6rem; }
+textarea { min-height: 4rem; resize: vertical; margin-top: .5rem; }
+:where(input, textarea, select, button):focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+input[type="checkbox"], input[type="radio"] { accent-color: var(--accent); }
+button, .btn { font: 600 .8rem var(--sans); color: var(--accent); background: var(--card); border: 1px solid var(--accent); border-radius: 4px; padding: .4rem .9rem; cursor: pointer; }
+button:hover, .btn:hover { background: var(--accent-bg); }
+button.primary, .btn.primary { color: #fff; background: var(--accent); }
+button.primary:hover, .btn.primary:hover { background: #6f1616; }
+.actions { display: flex; gap: .6rem; align-items: center; margin-top: .7rem; flex-wrap: wrap; }
+.status { font: .78rem var(--sans); color: var(--muted); }
+.status.queued { color: var(--new); }
+
+/* Custom SVG: classes node / edge / muted, colours only through var(--…) */
+figure { margin: 1.5rem 0; }
+figure img, svg { max-width: 100%; height: auto; }
+figcaption { font: .75rem var(--sans); color: var(--muted); margin-top: .3rem; }
+svg text { font-family: var(--sans); font-size: 12px; fill: var(--ink); }
+svg .node { fill: var(--card); stroke: var(--line); stroke-width: 1.5; }
+svg .node.new { fill: var(--new-bg); stroke: var(--new); } svg .node.changed { fill: var(--changed-bg); stroke: var(--changed); }
+svg .node.removed { fill: var(--removed-bg); stroke: var(--removed); } svg .node.focus { stroke: var(--accent); stroke-width: 2; }
+svg .edge { fill: none; stroke: var(--muted); stroke-width: 1.4; }
+svg .muted { fill: var(--muted); }
+
+@media print {
+  html, body { background: #fff; } body { max-width: none; font-size: 11pt; }
+  .actions, button { display: none; } details.more { display: block; }
+  a { color: inherit; text-decoration: none; }
+}

@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Example plan: session tokens to httpOnly cookies</title>
+<link rel="stylesheet" href="paper.css">
+</head>
+<body>
+<header>
+  <p class="kicker">Plan · example page · draft</p>
+  <h1>Move session tokens into httpOnly cookies</h1>
+  <p class="lede">Today any script on the page can read the session token. After this change only the browser can.</p>
+</header>
+
+<form class="question" data-lavish-question="mobile"
+  onsubmit="event.preventDefault(); const f = event.currentTarget, d = new FormData(f), v = d.get('mobile'), note = d.get('note'); if (!v) return; window.lavish?.queuePrompt('Mobile app: ' + v + (note ? ' — ' + note : ''), { tag: 'choice', element: f, data: { question: 'mobile', answer: v, note } }); const s = f.querySelector('.status'); s.textContent = 'Queued: ' + v; s.classList.add('queued');">
+  <fieldset>
+    <legend>Q1. Should the mobile app move to cookies too?</legend>
+    <p class="why">Decides whether step 3 can drop the bearer path entirely.</p>
+    <div class="options">
+      <label class="option rec"><input type="radio" name="mobile" value="move it too">
+        <span class="title">Move it too</span><span class="detail">One auth path; needs an app release first.</span></label>
+      <label class="option"><input type="radio" name="mobile" value="keep bearer">
+        <span class="title">Keep bearer for mobile</span><span class="detail">Two auth paths stay; step 3 shrinks.</span></label>
+    </div>
+    <textarea name="note" placeholder="Optional note"></textarea>
+  </fieldset>
+  <div class="actions"><button class="primary" type="submit">Queue answer</button><span class="status">Not queued</span></div>
+</form>
+
+<ul class="tldr">
+  <li><b>Why</b>An XSS bug today means a stolen session.</li>
+  <li><b>What changes</b>Login sets a cookie; the client stops touching the token.</li>
+  <li><b>Size</b>3 files, one migration step, no schema change.</li>
+</ul>
+
+<section id="today">
+  <h2>How a request is authenticated today</h2>
+  <div class="flow">
+    <div class="box"><b>Login form</b><small>POST /login</small></div>
+    <div class="arrow">token in body</div>
+    <div class="box focus"><b>localStorage</b><small>readable by any script</small><code>auth/store.ts:14</code></div>
+    <div class="arrow">Authorization header</div>
+    <div class="box"><b>API</b><small>validates bearer</small></div>
+  </div>
+</section>
+
+<section id="after">
+  <h2>What it looks like after</h2>
+  <div class="legend"><span class="new">new</span><span class="changed">changed</span><span class="removed">removed</span></div>
+  <div class="cols">
+    <div class="col"><h4>Before</h4>
+      <div class="flow v">
+        <div class="box"><b>Login response</b><small>token in JSON body</small></div>
+        <div class="arrow">client stores it</div>
+        <div class="box removed"><b>localStorage write</b></div>
+      </div>
+    </div>
+    <div class="col"><h4>After</h4>
+      <div class="flow v">
+        <div class="box changed"><b>Login response</b><small>Set-Cookie: HttpOnly; SameSite=Lax</small></div>
+        <div class="arrow">sent automatically</div>
+        <div class="box new"><b>Cookie auth middleware</b><code>api/auth/cookie.ts</code></div>
+      </div>
+    </div>
+  </div>
+  <details class="more"><summary>Why not keep the token and add a CSP?</summary>
+    <div class="flow"><div class="box"><b>CSP</b><small>blocks injected scripts</small></div><div class="arrow">misses</div><div class="box removed"><b>first-party XSS</b></div></div>
+    <p>A CSP narrows the attack but a single bug in our own scripts still reads the token. The cookie removes the token from script reach entirely.</p>
+  </details>
+  <div class="callout trap"><b>Trap</b>SameSite=Lax still sends the cookie on top-level GET navigations, so every GET must stay side-effect free.</div>
+</section>
+
+<section id="steps">
+  <h2>Steps</h2>
+  <ol class="steps">
+    <li class="step new"><b>Add cookie middleware beside bearer auth</b><small>Both accepted, so old clients keep working.</small></li>
+    <li class="step changed"><b>Login sets the cookie</b><small>The body still carries the token for one release.</small></li>
+    <li class="step removed"><b>Drop localStorage and the bearer path</b><small>After one release cycle.</small></li>
+  </ol>
+</section>
+
+<section id="shape">
+  <h2>Who holds the token</h2>
+  <figure>
+    <svg viewBox="0 0 560 120" aria-label="Token holders before and after">
+      <rect class="node removed" x="10" y="20" width="150" height="50" rx="8"/><text x="85" y="50" text-anchor="middle">Page scripts</text>
+      <rect class="node focus" x="205" y="20" width="150" height="50" rx="8"/><text x="280" y="50" text-anchor="middle">Browser cookie jar</text>
+      <rect class="node" x="400" y="20" width="150" height="50" rx="8"/><text x="475" y="50" text-anchor="middle">API</text>
+      <path class="edge" d="M355 45 H398" marker-end="url(#ar)"/><path class="edge" d="M160 45 H203" stroke-dasharray="4 3"/>
+      <text class="muted" x="182" y="95" text-anchor="middle" font-size="11">no access</text>
+      <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10z" fill="var(--muted)"/></marker></defs>
+    </svg>
+    <figcaption>After the change, only the cookie jar holds the token.</figcaption>
+  </figure>
+</section>
+
+<section id="files">
+  <h2>Where it happens</h2>
+  <table class="files">
+    <tr><th>File</th><th>Role</th></tr>
+    <tr><td><code>api/auth/cookie.ts</code></td><td><span class="badge new">new</span> middleware</td></tr>
+    <tr><td><code>api/routes/login.ts</code></td><td><span class="badge changed">changed</span> sets the cookie</td></tr>
+    <tr><td><code>web/auth/store.ts</code></td><td><span class="badge removed">removed</span> in step 3</td></tr>
+  </table>
+</section>
+</body>
+</html>

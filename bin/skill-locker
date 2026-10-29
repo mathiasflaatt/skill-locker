@@ -1,0 +1,199 @@
+#!/usr/bin/env bash
+# Sync user skills between this repo and the skill folders that agents read.
+set -euo pipefail
+
+REPO="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
+MACHINE="${SKILL_LOCKER_MACHINE:-$(hostname -s)}"
+AGENTS_DIR="${SKILL_LOCKER_AGENTS_DIR:-$HOME/.agents/skills}"
+CLAUDE_DIR="${SKILL_LOCKER_CLAUDE_DIR:-$HOME/.claude/skills}"
+BACKUP_DIR="$HOME/.skill-locker-backup/$(date +%Y%m%d-%H%M%S)"
+SCAN_DIRS=("$AGENTS_DIR" "$CLAUDE_DIR" "$HOME/.copilot/skills")
+EXTRAS_LIST="$REPO/machines/$MACHINE/extras"
+
+usage() {
+  cat <<EOF
+Usage: skill-locker <command>
+
+  pull               Pull the latest skills, then link them.
+  push [message]     Commit all skill changes, rebase on the remote, push, then link.
+  link               Link repo skills into $AGENTS_DIR and $CLAUDE_DIR,
+                     and link this machine's extras into \$HOME.
+  adopt <name> [--machine]
+                     Move a local skill into the repo (shared/ by default,
+                     machines/$MACHINE/ with --machine), then link it.
+  track <path>       Move a file or folder under \$HOME (for example ~/.agents/AGENTS.md)
+                     into extras/ and use it on this machine.
+  use <path>         Use an extra that is already in the repo on this machine.
+  status             Show repo changes and local skills that the repo does not manage.
+
+Machine: $MACHINE (set SKILL_LOCKER_MACHINE to override)
+EOF
+}
+
+# Print "name<TAB>path" for each skill this machine uses. Machine skills override shared skills.
+repo_skills() {
+  local -A seen=()
+  local d name
+  for d in "$REPO/machines/$MACHINE"/*/ "$REPO/shared"/*/; do
+    [[ -f "$d/SKILL.md" ]] || continue
+    name="$(basename "$d")"
+    if [[ -n "${seen[$name]:-}" ]]; then
+      echo "warning: '$name' is in shared/ and machines/$MACHINE/; using the machine copy" >&2
+      continue
+    fi
+    seen[$name]=1
+    printf '%s\t%s\n' "$name" "${d%/}"
+  done
+}
+
+backup() {
+  mkdir -p "$BACKUP_DIR/$2"
+  mv "$1" "$BACKUP_DIR/$2/"
+  echo "backed up $1 -> $BACKUP_DIR/$2/"
+}
+
+ensure_link() { # <link path> <target> <backup label>
+  local link="$1" target="$2"
+  if [[ -L "$link" && "$(readlink "$link")" == "$target" ]]; then return; fi
+  if [[ -e "$link" || -L "$link" ]]; then
+    if [[ -L "$link" ]]; then rm "$link"; else backup "$link" "$3"; fi
+  fi
+  ln -s "$target" "$link"
+  echo "linked $link -> $target"
+}
+
+cmd_link() {
+  mkdir -p "$AGENTS_DIR" "$CLAUDE_DIR"
+  local -A wanted=()
+  local name path link
+  while IFS=$'\t' read -r name path; do
+    wanted[$name]=1
+    ensure_link "$AGENTS_DIR/$name" "$path" agents
+    ensure_link "$CLAUDE_DIR/$name" "$AGENTS_DIR/$name" claude
+  done < <(repo_skills)
+
+  # Remove links to repo skills that were deleted or moved to another machine.
+  for link in "$AGENTS_DIR"/* "$CLAUDE_DIR"/*; do
+    [[ -L "$link" ]] || continue
+    name="$(basename "$link")"
+    [[ -n "${wanted[$name]:-}" ]] && continue
+    case "$(readlink "$link")" in
+      "$REPO"/*|"$AGENTS_DIR"/*) rm "$link"; echo "unlinked $link" ;;
+    esac
+  done
+
+  link_extras
+}
+
+# Extras are paths relative to $HOME, stored at extras/<path>. Each machine opts in
+# by listing paths in machines/<host>/extras.
+extras_for() { [[ -f "$1" ]] && grep -vE '^\s*(#|$)' "$1" || true; }
+
+link_extras() {
+  local -A wanted=()
+  local rel list
+  while read -r rel; do
+    wanted[$rel]=1
+    if [[ ! -e "$REPO/extras/$rel" ]]; then
+      echo "warning: extra '$rel' is in $EXTRAS_LIST but not in extras/" >&2
+      continue
+    fi
+    mkdir -p "$(dirname "$HOME/$rel")"
+    ensure_link "$HOME/$rel" "$REPO/extras/$rel" "home/$(dirname "$rel")"
+  done < <(extras_for "$EXTRAS_LIST")
+
+  # Remove links to extras that this machine no longer uses.
+  for list in "$REPO"/machines/*/extras; do
+    while read -r rel; do
+      [[ -n "${wanted[$rel]:-}" ]] && continue
+      if [[ -L "$HOME/$rel" && "$(readlink "$HOME/$rel")" == "$REPO/extras/$rel" ]]; then
+        rm "$HOME/$rel"; echo "unlinked $HOME/$rel"
+      fi
+    done < <(extras_for "$list")
+  done
+}
+
+rel_path() { # absolute, ~/..., or $HOME-relative path -> path relative to $HOME
+  local p="${1/#\~/$HOME}"
+  [[ "$p" == /* ]] || p="$HOME/$p"
+  p="$(realpath -ms "$p")"
+  [[ "$p" == "$HOME"/* ]] || { echo "error: '$1' is not under $HOME" >&2; exit 1; }
+  echo "${p#"$HOME"/}"
+}
+
+cmd_use() {
+  local rel
+  rel="$(rel_path "${1:?usage: skill-locker use <path>}")"
+  [[ -e "$REPO/extras/$rel" ]] || { echo "error: extras/$rel is not in the repo" >&2; exit 1; }
+  mkdir -p "$(dirname "$EXTRAS_LIST")"
+  extras_for "$EXTRAS_LIST" | grep -qxF "$rel" || echo "$rel" >> "$EXTRAS_LIST"
+  link_extras
+}
+
+cmd_track() {
+  local rel
+  rel="$(rel_path "${1:?usage: skill-locker track <path>}")"
+  [[ -e "$REPO/extras/$rel" ]] && { echo "error: extras/$rel is already in the repo; run 'skill-locker use $rel'" >&2; exit 1; }
+  [[ -e "$HOME/$rel" && ! -L "$HOME/$rel" ]] || { echo "error: $HOME/$rel is not a real file or folder" >&2; exit 1; }
+  mkdir -p "$(dirname "$REPO/extras/$rel")"
+  mv "$HOME/$rel" "$REPO/extras/$rel"
+  echo "moved $HOME/$rel -> $REPO/extras/$rel"
+  cmd_use "$rel"
+}
+
+cmd_pull() {
+  git -C "$REPO" pull --rebase --autostash
+  cmd_link
+}
+
+cmd_push() {
+  local msg="${1:-chore: update skills from $MACHINE}"
+  git -C "$REPO" add -A
+  if ! git -C "$REPO" diff --cached --quiet; then
+    git -C "$REPO" commit -q -m "$msg"
+    echo "committed: $msg"
+  fi
+  if git -C "$REPO" ls-remote --exit-code --heads origin "$(git -C "$REPO" branch --show-current)" >/dev/null 2>&1; then
+    git -C "$REPO" pull --rebase --autostash
+  fi
+  git -C "$REPO" push -u origin HEAD
+  cmd_link
+}
+
+cmd_adopt() {
+  local name="${1:?usage: skill-locker adopt <name> [--machine]}" dest="$REPO/shared" src="" d
+  [[ "${2:-}" == "--machine" ]] && dest="$REPO/machines/$MACHINE"
+  [[ -e "$REPO/shared/$name" || -e "$REPO/machines/$MACHINE/$name" ]] && { echo "error: '$name' is already in the repo" >&2; exit 1; }
+  for d in "${SCAN_DIRS[@]}"; do
+    if [[ -d "$d/$name" && ! -L "$d/$name" ]]; then src="$d/$name"; break; fi
+  done
+  [[ -n "$src" ]] || { echo "error: no local skill folder named '$name'" >&2; exit 1; }
+  mkdir -p "$dest"
+  mv "$src" "$dest/$name"
+  echo "moved $src -> $dest/$name"
+  cmd_link
+}
+
+cmd_status() {
+  git -C "$REPO" status --short --branch
+  local d found=0
+  for d in "${SCAN_DIRS[@]}"; do
+    for s in "$d"/*/; do
+      s="${s%/}"
+      [[ -d "$s" && ! -L "$s" ]] || continue
+      ((found++)) || echo "Local skills not in the repo (use 'skill-locker adopt <name>'):"
+      echo "  $s"
+    done
+  done
+}
+
+case "${1:-}" in
+  pull) cmd_pull ;;
+  push) shift; cmd_push "$@" ;;
+  link) cmd_link ;;
+  adopt) shift; cmd_adopt "$@" ;;
+  track) shift; cmd_track "$@" ;;
+  use) shift; cmd_use "$@" ;;
+  status) cmd_status ;;
+  *) usage; [[ -z "${1:-}" || "$1" == -h || "$1" == --help ]] || exit 1 ;;
+esac

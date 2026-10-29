@@ -1,0 +1,4 @@
+interface:
+  display_name: "Full Send"
+  short_description: "Prove, review, and merge a PR"
+  default_prompt: "Use $full-send to take this change to a merged PR."

@@ -1,0 +1,7 @@
+.agents/AGENTS.md
+.agents/hooks
+.agents/lavish
+.copilot/hooks/no-main-merge.json
+.agents/agent-skills/designer
+.copilot/agents/designer.agent.md
+.claude/agents/designer.agent.md
