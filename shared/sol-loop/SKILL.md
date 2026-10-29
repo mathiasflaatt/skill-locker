@@ -1,6 +1,6 @@
 ---
 name: sol-loop
-description: Use when the user says "sol loop".
+description: Review a change in a loop with a GPT Sol reviewer until it approves. Use when the user says "sol loop", or asks to review a branch, a PR, or work-in-progress changes.
 ---
 
 # sol-loop
@@ -43,6 +43,10 @@ Use one diff command all rounds. State intent and out-of-scope in 1-2
 sentences. Run covering checks. Do not send code this change breaks. Note
 missing or pre-failing checks in the brief.
 
+Call the Skill tool for `code-review` and do its steps 2 and 3 only: find
+the spec source and the standards files. Note the path of its `SKILL.md`;
+the reviewer reads the smell baseline from there.
+
 ## 2. Start Sol
 
 In Copilot CLI, start the reviewer with the `task` tool: `agent_type:
@@ -63,15 +67,19 @@ Round 1 brief (the reviewer gets no history):
 ```
 Review only. Do not edit, commit, push, comment on PRs, or start subagents.
 Repo: <abs path> Base: <sha> Intent: <intent> Out of scope: <scope> Checks: <results>
+Spec: <path, URL, or "none"> Standards: <files>, plus the "smell baseline" in <code-review SKILL.md path>
 See: git diff <base> [-- <paths>]; git status --short (read untracked).
 Read surrounding code. Find bugs, broken callers, mismatch with intent.
+Review two axes and keep them apart: spec (missing, wrong, or unasked-for
+behavior; quote the spec line) and standards (cite the rule; smells are
+always nits).
 Skip style unless it hides a bug. Hold to the smallest change. Flag code,
 tests, or guards the intent does not need. Other paths, rare cases, small
 perf, extra compat: nits.
 blocker = intended case wrong. should = real bug callers will hit, in intent. nit = rest.
 Reply:
 VERDICT: APPROVE or CHANGES
-S1 [blocker|should|nit] <file>:<line> <claim>. Fix: <suggestion> (stable ids)
+S1 [blocker|should|nit] [spec|standards|bug] <file>:<line> <claim>. Fix: <suggestion> (stable ids)
 ```
 
 ## 3. Answer findings

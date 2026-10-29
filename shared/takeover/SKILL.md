@@ -1,6 +1,7 @@
 ---
 name: takeover
 description: Take over existing work. Use when the user asks to take over a PR, branch, or agent thread, or requests a takeover.
+disable-model-invocation: true
 ---
 
 # Takeover
@@ -34,7 +35,7 @@ Independently verify the original failure and realistic workflows, following
 repository guidance and permissions. Green mocked tests do not prove the user
 experience works. State what remains unverified.
 
-When the requested finish includes a PR, use `file-pr` to file or update it,
+When the requested finish includes a PR, use `pr` to file or update it,
 then `babysit-pr` rather than stopping at creation. Use `leaving-pr-comments`
 for replies. Merge or close the original PR only when authorized.
 

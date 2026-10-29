@@ -11,7 +11,7 @@ Edit Markdown and single-file text with the `edit` tool. Use `sed` only for one 
 - Delegate with native inline subagents (Copilot `task`, Claude Code `Agent`); run them in background mode and act on the completion notification.
 - Give each parallel implementer its own `git worktree add` checkout and pass it the absolute path. Reviewers read the committed diff.
 - Integrate each reviewed slice through a merger subagent: it merges into the integration branch, resolves conflicts, runs the verify gate, and reports the merge commit. Run one merger at a time.
-- Use the Orca CLI only for a full ownership handoff or when the user asks for Orca; load `orca-cli` first and follow its guide.
+- For a full ownership handoff, use the `handoff` skill. Use the Orca CLI only when the user asks for Orca; load `orca-cli` first and follow its guide.
 - Set `model` on every subagent spawn to the newest version of the chosen model family in the tool's model list (for example `gpt-6-luna`, not `gpt-5.6-luna`). The harness default for `explore` is an older version, so an omitted `model` does not give the newest version.
 - When `SKILL_LOCKER_ASPIRE_MAX` in `~/.config/skill-locker/local.env` is a positive integer, at most that many agents may run the Aspire stack (`aspire start`, Docker/startup tests) at once. Queue further Aspire-running slices. Agents doing only build/unit tests may run alongside. When the variable is unset, do not add a cap.
 

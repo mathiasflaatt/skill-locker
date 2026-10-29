@@ -1,6 +1,6 @@
 ---
 name: pr
-description: "Use when writing a PR body."
+description: "File, open, create or update a pull request, or write a PR body. Use when the user asks for a PR or a PR description."
 metadata:
   credits:
     skill: show-me
@@ -9,7 +9,22 @@ metadata:
     url: "https://github.com/humanlayer/skills/blob/main/plugins/show-me/skills/show-me/SKILL.md"
 ---
 
-Use this template for writing the PR body:
+## Filing
+
+Before filing, check whether a PR for this branch already exists. Review the diff against the base branch (usually `origin/main`) and make sure it matches the goal.
+
+**Title.** PR titles usually become commit messages, so follow the repo's title conventions (see recent merged PRs and `git log`). Say why the change matters, not what you touched:
+
+- ❌ `perf(server): negotiate permessage-deflate on the websocket`
+- ✅ `perf(server): cut websocket frame size by 70%+ with gzipping`
+
+**Body.** Use the template below. If the repo has a PR template (`.github/pull_request_template.md`), its sections win; fill them in the style below. End the body with the public model name and harness that made the change, for example `Created with <model> in <harness>.`, and include subagent models that wrote part of it. If the model is unknown, name only the harness.
+
+**Before you submit,** check the title, body, quotes and attachments for secrets and private details.
+
+**Submit** a real PR, not a draft, so review bots run. If `gh pr create` fails because the GraphQL rate limit is used up, use REST: `gh api repos/<owner>/<repo>/pulls -f title=... -f head=... -f base=... -F body=@<file>`. If the user asked to babysit it, continue with the `babysit-pr` skill. Post a PR comment only when the request needs one, with the `leaving-pr-comments` skill.
+
+## Body template
 
 ```markdown
 ## Summary
@@ -165,7 +180,7 @@ You may use one of these, you may use several, it is unlikely you will use all o
 
 Concrete evidence that the change works. Show a before and after.
 
-Screenshots are S-tier - when the environment is set up for it and the change is visual.
+Screenshots are S-tier - when the environment is set up for it and the change is visual. Attach them with `--attach <file>` on `gh pr create` / `gh pr edit` (gh 2.99.0 or later), or with the `github-pr-media` skill when it is available. Put before and after side by side.
 
 Execution-based evidence is A-tier. Test results, console output. Show the exact test that now fails and passes, using pseudocode.
 

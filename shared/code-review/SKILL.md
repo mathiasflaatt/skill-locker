@@ -1,6 +1,6 @@
 ---
 name: code-review
-description: "Review the changes since a fixed point (commit, branch, tag, or merge-base) along two axes: Standards (does the code follow this repo's documented coding standards?) and Spec (does the code match what the originating issue/spec asked for?). Runs both reviews in parallel sub-agents and reports them side by side. Use when the user wants to review a branch, a PR, work-in-progress changes, or asks to \"review since X\"."
+description: "Two-axis review rubric: Standards (repo coding standards plus a code-smell baseline) and Spec (does the diff match its issue or spec). sol-loop uses it for every review round. For a review request, use sol-loop; call this skill alone only for a one-shot review without Sol."
 ---
 
 Two-axis review of the diff between `HEAD` and a fixed point the user supplies:
