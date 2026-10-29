@@ -116,7 +116,8 @@ link_extras() {
 rel_path() { # absolute, ~/..., or $HOME-relative path -> path relative to $HOME
   local p="${1/#\~/$HOME}"
   [[ "$p" == /* ]] || p="$HOME/$p"
-  p="$(realpath -ms "$p")"
+  # shortcut: BSD realpath (macOS) has no -m/-s, so the path stays unnormalized there; ".." in args is not resolved
+  p="$(realpath -ms "$p" 2>/dev/null || echo "$p")"
   [[ "$p" == "$HOME"/* ]] || { echo "error: '$1' is not under $HOME" >&2; exit 1; }
   echo "${p#"$HOME"/}"
 }
