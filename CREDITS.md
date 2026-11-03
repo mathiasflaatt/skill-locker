@@ -37,6 +37,21 @@ Most skills in this repo are copies of work by other authors. Each copy keeps it
 | `wayfinder` | Matt Pocock | [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/engineering/wayfinder) | MIT | yes |
 | `wizard` | Matt Pocock | [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/engineering/wizard) | MIT | no |
 | `writing-for-agents` | Matt Pocock | [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/productivity/writing-for-agents) | MIT | no |
+| `architect` | Lauren Tan | [cursor/plugins](https://github.com/cursor/plugins/tree/main/pstack/skills/architect) | MIT | yes |
+| `arena` | Lauren Tan | [cursor/plugins](https://github.com/cursor/plugins/tree/main/pstack/skills/arena) | MIT | yes |
+| `blast-radius` | Lauren Tan | [cursor/plugins](https://github.com/cursor/plugins/tree/main/pstack/skills/blast-radius) | MIT | yes |
+| `create-formal-verification-skill` | Lauren Tan | [cursor/plugins](https://github.com/cursor/plugins/tree/main/pstack/skills/create-formal-verification-skill) | MIT | yes |
+| `create-verification-skill` | Lauren Tan | [cursor/plugins](https://github.com/cursor/plugins/tree/main/pstack/skills/create-verification-skill) | MIT | yes |
+| `figure-it-out` | Lauren Tan | [cursor/plugins](https://github.com/cursor/plugins/tree/main/pstack/skills/figure-it-out) | MIT | yes |
+| `how` | Lauren Tan | [cursor/plugins](https://github.com/cursor/plugins/tree/main/pstack/skills/how) | MIT | yes |
+| `in-your-own-words` | Lauren Tan | [cursor/plugins](https://github.com/cursor/plugins/tree/main/pstack/skills/in-your-own-words) | MIT | yes |
+| `interrogate` | Lauren Tan | [cursor/plugins](https://github.com/cursor/plugins/tree/main/pstack/skills/interrogate) | MIT | yes |
+| `maintain-formal-verification-skill` | Lauren Tan | [cursor/plugins](https://github.com/cursor/plugins/tree/main/pstack/skills/maintain-formal-verification-skill) | MIT | yes |
+| `sharpen` | Lauren Tan | [cursor/plugins](https://github.com/cursor/plugins/tree/main/pstack/skills/sharpen) | MIT | yes |
+| `statechart` | Lauren Tan | [cursor/plugins](https://github.com/cursor/plugins/tree/main/pstack/skills/statechart) | MIT | yes |
+| `unslop` | Lauren Tan | [cursor/plugins](https://github.com/cursor/plugins/tree/main/pstack/skills/unslop) | MIT | yes |
+| `why` | Lauren Tan | [cursor/plugins](https://github.com/cursor/plugins/tree/main/pstack/skills/why) | MIT | yes |
+| `extras/.agents/pstack/claude-code.md` (Cursor → Claude Code map for the pstack skills) | Lauren Tan | [cursor/plugins](https://github.com/cursor/plugins/tree/main/pstack/docs/harness/claude-code.md) | MIT | yes |
 | `impeccable` (designer agent) | Paul Bakaus | [pbakaus/impeccable](https://github.com/pbakaus/impeccable/tree/main/.agents/skills/impeccable) | Apache-2.0 | no |
 
 ## My own work (MIT, see `LICENSE`)
