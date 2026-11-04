@@ -41,6 +41,12 @@ State lives in ~/.local/state/pr-wait/. A lock makes a second watcher for the
 same PR exit at once. A state file lets a restarted watcher report what arrived
 while no watcher ran. The first run for a PR records what already exists and
 reports only what comes after.
+
+Checks come from `gh pr checks`. A fine-grained PAT cannot get the Checks
+permission, so when GitHub refuses the check runs, pr-wait reads GitHub Actions
+jobs (Actions: read) and commit statuses (Commit statuses: read) instead. In
+that mode, check runs from GitHub Apps (review bots, for example) are not
+visible: a review bot counts as done when it reviews or summarizes the head.
 """
 
 from __future__ import annotations
@@ -77,6 +83,11 @@ FAILED = ("fail", "cancel")
 # gh pr checks buckets, worst first. Duplicate names (push and pull_request runs
 # of one job) collapse to the worst bucket.
 RANK = {"fail": 4, "cancel": 3, "pending": 2, "pass": 1, "skipping": 0}
+# Fine-grained PATs cannot get the Checks permission, so check runs (and gh pr
+# checks) are closed to them. Actions jobs and commit statuses stay readable.
+NO_CHECKS_ACCESS = "Resource not accessible by personal access token"
+JOB_BUCKET = {"success": "pass", "skipped": "skipping", "neutral": "skipping", "cancelled": "cancel"}
+STATUS_BUCKET = {"success": "pass", "pending": "pending"}
 
 QUERY = """
 query($owner: String!, $name: String!, $number: Int!) {
@@ -260,6 +271,8 @@ class Watcher:
         self.required: set[str] | None = None
         self.prev_snapshot: list[tuple[str, str]] | None = None
         self.pr_files: dict[str, set[str]] = {}
+        self.actions_only = False
+        self.jobs_cache: dict[int, tuple[str, list[Json]]] = {}
 
     def load(self) -> Json | None:
         try:
@@ -305,16 +318,77 @@ class Watcher:
         pr["viewer"] = data["viewer"]["login"]
         return pr
 
-    def fetch_checks(self) -> dict[str, Json]:
+    def fetch_checks(self, head: str) -> dict[str, Json]:
+        if not self.actions_only:
+            try:
+                return self.collapse(self.fetch_check_runs())
+            except GhError as error:
+                if NO_CHECKS_ACCESS not in str(error):
+                    raise
+                self.actions_only = True
+                log(
+                    "the token cannot read check runs (a fine-grained PAT cannot get Checks), so "
+                    "checks come from GitHub Actions jobs and commit statuses. Check runs from "
+                    "GitHub Apps are not visible"
+                )
+        return self.collapse(self.fetch_actions_checks(head))
+
+    def fetch_check_runs(self) -> list[Json]:
         # gh pr checks exits 8 while checks are pending and 1 when one failed.
         # Those are states, not errors: read the JSON and ignore the exit code.
         proc = gh(["pr", "checks", str(self.pr), "-R", self.repo, "--json", "name,bucket,link,description"], allow=(0, 1, 8))
         if not proc.stdout.strip():
             if "no checks reported" in proc.stderr:
-                return {}
-            raise GhError(proc.stderr.strip() or f"gh pr checks exited {proc.returncode}", False)
+                return []
+            lines = proc.stderr.strip().splitlines()
+            raise GhError(lines[-1] if lines else f"gh pr checks exited {proc.returncode}", False)
+        return json.loads(proc.stdout)
+
+    def fetch_actions_checks(self, head: str) -> list[Json]:
+        """Checks rebuilt from Actions jobs (Actions: read) and commit statuses
+        (Commit statuses: read), in the row shape of gh pr checks."""
+        runs = json.loads(gh([
+            "api", f"repos/{self.repo}/actions/runs?head_sha={head}&per_page=100",
+            "--jq", "[.workflow_runs[] | {id, workflow_id, event, updated_at}]",
+        ]).stdout)
+        # Keep the newest run per workflow and event, so a run that a newer one
+        # cancelled (concurrency groups) does not count as a failure.
+        latest: dict[tuple[int, str], Json] = {}
+        for run in runs:
+            key = (run["workflow_id"], run["event"])
+            if key not in latest or run["id"] > latest[key]["id"]:
+                latest[key] = run
+        rows: list[Json] = []
+        for run in latest.values():
+            cached = self.jobs_cache.get(run["id"])
+            if cached and cached[0] == run["updated_at"]:
+                jobs = cached[1]
+            else:
+                jobs = json.loads(gh([
+                    "api", f"repos/{self.repo}/actions/runs/{run['id']}/jobs?per_page=100",
+                    "--jq", "[.jobs[] | {name, status, conclusion, html_url}]",
+                ]).stdout)
+                self.jobs_cache[run["id"]] = (run["updated_at"], jobs)
+            for job in jobs:
+                bucket = "pending" if job["status"] != "completed" else JOB_BUCKET.get(job["conclusion"] or "", "fail")
+                rows.append({"name": job["name"], "bucket": bucket, "link": job["html_url"] or "", "description": ""})
+        statuses = json.loads(gh([
+            "api", f"repos/{self.repo}/commits/{head}/status",
+            "--jq", "[.statuses[] | {context, state, target_url, description}]",
+        ]).stdout)
+        for status in statuses:
+            rows.append({
+                "name": status["context"],
+                "bucket": STATUS_BUCKET.get(status["state"], "fail"),
+                "link": status["target_url"] or "",
+                "description": status["description"] or "",
+            })
+        return rows
+
+    @staticmethod
+    def collapse(rows: list[Json]) -> dict[str, Json]:
         checks: dict[str, Json] = {}
-        for row in json.loads(proc.stdout):
+        for row in rows:
             current = checks.get(row["name"])
             if current is None or RANK.get(row["bucket"], 2) > RANK.get(current["bucket"], 2):
                 checks[row["name"]] = row
@@ -353,8 +427,8 @@ class Watcher:
             self.required = required_checks(self.repo, base)
             gate = ", ".join(sorted(self.required)) or "none set, so every CI check gates"
             log(f"watching {self.repo}#{self.pr} until {self.until}; required checks: {gate}")
-        checks = self.fetch_checks()
         head = pr["headRefOid"]
+        checks = self.fetch_checks(head)
         short = head[:7]
         mine = {who(pr)[0], pr["viewer"]}
         comments = pr["comments"]["nodes"]

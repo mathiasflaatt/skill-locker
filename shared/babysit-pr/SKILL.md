@@ -56,6 +56,17 @@ used up, the REST limit is separate and usually still has room. Use
 `gh api repos/<owner>/<repo>/pulls/<n>` to read a PR, and
 `gh api repos/<owner>/<repo>/commits/<sha>/check-runs` for checks.
 
+## Fine-grained tokens
+
+A fine-grained PAT cannot get the Checks permission. On a private repo,
+`gh pr checks`, plain `gh pr view`, and the `check-runs` API then fail with
+"Resource not accessible by personal access token". `pr-wait` handles this
+itself: it reads Actions jobs and commit statuses instead. By hand, use
+`gh pr view <n> --json <fields>` without `statusCheckRollup`,
+`gh run list --commit <sha>`, and
+`gh api repos/<owner>/<repo>/actions/runs/<id>/jobs`. Do not ask the user for a
+new token because of this error.
+
 ## Reviews
 
 Only act on checks and comments newer than the latest push. Verify every bot
