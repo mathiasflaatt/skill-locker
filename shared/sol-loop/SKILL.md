@@ -1,28 +1,52 @@
 ---
 name: sol-loop
-description: Review a change in a loop with a GPT Sol reviewer until it approves. Use when the user says "sol loop", or asks to review a branch, a PR, or work-in-progress changes.
+description: Review a change in a loop until it is approved, with GPT Sol on the whole diff, Haiku on hot spots, and a 3-provider council for one-way-door changes. Use when the user says "sol loop" or "council", asks to review a branch, a PR, or work-in-progress changes, or asks for a review report with no fixes.
 ---
 
 # sol-loop
 
-This is a workflow for making your code changes more correct before (or
-sometimes after) filing a pull request. tl;dr - use OpenAI's GPT Sol to review
-your code in a loop.
+Review a change in rounds and fix between rounds, until the reviewers
+approve. GPT Sol judges the whole diff. Up to 3 Haiku reviewers each dig
+into one hot spot. On one-way doors, a council of three providers reviews
+the whole diff.
 
-Make the most minimal possible changes to appease the Sol reviewers. Be careful
-of scope creep and don't be scared to push back.
+Make the smallest changes that satisfy the reviewers. Fight scope creep,
+and push back with evidence.
+
+## Modes
+
+| Mode | When | Whole-diff seats | Hot-spot seats |
+| --- | --- | --- | --- |
+| default | any review | Sol | ≤3 Haiku |
+| council | user says "council", or the diff is a one-way door | Sol, Sonnet, Grok | ≤3 Haiku |
+| report | user wants a review with no fixes | as default or council | as default or council |
+
+A **one-way door** is a change that is hard to undo after it ships: a
+schema or migration, deleting or rewriting stored data, auth, RLS or tenant
+isolation, a public API contract or wire format that others read, or
+infrastructure state (Terraform). When you pick council mode on your own,
+say why in one line.
+
+Report mode runs steps 1–3 once, fixes nothing, and replies in the report
+format of `rubric.md`.
+
+Seats use the newest model of each family in the `task` tool's model list:
+Sol (`gpt-6.1-sol`), Sonnet (`claude-sonnet-5.5`), Grok (`grok-4.7`),
+Haiku (`claude-haiku-5.5`). Use a version the user names. If a seat's model
+is not available, report the blocker; a seat runs only on its own family.
 
 ## Budget
 
 - Default: 3 rounds total. Round 1 is full. Later rounds check only
   changed code and open findings.
 - Extend to 5 only for security, permissions, auth, data loss, or
-  state/concurrency, while a blocker or should stays open with evidence. Or when
-  the user asks.
+  state/concurrency, while a blocker or should stays open with evidence. Or
+  when the user asks.
 - Stop early if a round returns only nits. Declined nits and comment,
   doc, or format-only fixes need no new round.
-- One reviewer only. Sol must not start subagents or reviewers.
-- Keep a ledger: id, severity, outcome, usage if returned. Never guess it.
+- Per round: one agent per seat. Reviewers must not start subagents.
+- Keep a ledger: id, seat, severity, outcome, usage if returned. Never
+  guess it.
 
 ## 1. Scope
 
@@ -40,52 +64,97 @@ Find the base after `git fetch origin`:
 
 The change is base to working tree in those paths, with untracked files.
 Use one diff command all rounds. State intent and out-of-scope in 1-2
-sentences. Run covering checks. Do not send code this change breaks. Note
-missing or pre-failing checks in the brief.
+sentences.
 
-Call the Skill tool for `code-review` and do its steps 2 and 3 only: find
-the spec source and the standards files. Note the path of its `SKILL.md`;
-the reviewer reads the smell baseline from there.
+Except in report mode, fix known issues before round 1: open PR comments
+and failing checks. Reviewers get the current implementation. Run covering
+checks; note missing or pre-failing checks in the brief.
 
-## 2. Start Sol
+Gather for the brief:
 
-In Copilot CLI, start the reviewer with the `task` tool: `agent_type:
-"code-review"`, `mode: "background"`, and `model` set to the latest Sol in
-the tool's model list (for example `gpt-6.1-sol`) unless the user named a
-version. Record model and effort only if exposed. Save the `agent_id`.
+- **Spec:** issue refs in commit messages or the PR (`#123`, `Closes #45`),
+  a path the user gave, or a spec under `docs/`, `specs/` or `.scratch/`
+  that matches the branch. If none, ask once; "none" is a valid answer.
+- **Standards:** the files that document how code is written here
+  (`AGENTS.md`, `CODING_STANDARDS.md`, `CONTRIBUTING.md`, and similar).
+- **Load:** the expected load from the README or deploy config, such as
+  one script run or many users at once.
+- **Mode:** default, council or report, from the table above.
 
-Elsewhere (Claude Code, Codex, an agent in an Orca terminal), use a native
-subagent that runs Sol and keep its ID. If no route runs Sol, report the
-blocker. Do not substitute a model.
+## 2. Hot spots
 
-Do not edit scoped files while review runs. Wait for the completion notice,
-then read the result once (`read_agent`). Do not poll or start a second reviewer. Timeout, error, or no reply is not
-approval. On failure, cancel, verify stop, restart with the ledger.
+Rank the changed hunks by risk: one-way-door code first, then shared state
+and concurrency, input parsing, money and time math, then the largest
+behavior hunk. Take one hot spot per distinct risky area, at most 3, each
+a `file:start-end` range of about 80 lines or fewer. A diff with no risky
+hunk (docs, renames, formatting) gets no Haiku seat.
 
-Round 1 brief (the reviewer gets no history):
+## 3. Start reviewers
+
+Start every seat in one response with the `task` tool: `agent_type:
+"code-review"`, `mode: "background"`, `model` set per seat. Elsewhere
+(Claude Code, Codex, an Orca terminal), use native subagents on the same
+models. Save each `agent_id`. Record model and effort only if exposed.
+
+Do not edit scoped files while reviewers run. Wait for each completion
+notice, then read each result once (`read_agent`). Timeout, error, or no
+reply is not approval. On a failed seat: cancel, verify stop, restart it
+with the ledger.
+
+Ids are stable per seat: `S` Sol, `C` Sonnet, `G` Grok, `H1`–`H3` Haiku.
+
+Whole-diff brief (Sol; Sonnet and Grok in council):
 
 ```
 Review only. Do not edit, commit, push, comment on PRs, or start subagents.
-Repo: <abs path> Base: <sha> Intent: <intent> Out of scope: <scope> Checks: <results>
-Spec: <path, URL, or "none"> Standards: <files>, plus the "smell baseline" in <code-review SKILL.md path>
+Repo: <abs path> Base: <sha> Intent: <intent> Out of scope: <scope>
+Checks: <results> Load: <expected load>
+Spec: <path, URL, or "none"> Standards: <files>
+Rubric: read <abs path to this skill>/rubric.md first.
 See: git diff <base> [-- <paths>]; git status --short (read untracked).
-Read surrounding code. Find bugs, broken callers, mismatch with intent.
-Review two axes and keep them apart: spec (missing, wrong, or unasked-for
-behavior; quote the spec line) and standards (cite the rule; smells are
-always nits).
-Skip style unless it hides a bug. Hold to the smallest change. Flag code,
-tests, or guards the intent does not need. Other paths, rare cases, small
-perf, extra compat: nits.
-blocker = intended case wrong. should = real bug callers will hit, in intent. nit = rest.
+Read the code the diff touches: callers of every changed function, the
+functions it calls, the tests. Apply every lens in the rubric. Keep spec
+and standards findings apart from the rest.
+Hold to the smallest change. Flag code, tests, or guards the intent does
+not need. Other paths, rare cases, small perf, extra compat: nits.
+blocker = intended case wrong. should = real bug callers will hit, in
+intent. nit = rest.
 Reply:
 VERDICT: APPROVE or CHANGES
-S1 [blocker|should|nit] [spec|standards|bug] <file>:<line> <claim>. Fix: <suggestion> (stable ids)
+SCORE: <n>/10                              (council only)
+<id>1 [blocker|should|nit] [spec|standards|bug|risk|scale|test|speed|lean]
+  <file>:<line> <claim>. Case: <input or situation -> wrong result>.
+  Fix: <suggestion>
 ```
 
-## 3. Answer findings
+Hot-spot brief (one Haiku per hot spot):
 
-Check each finding and severity yourself. Another path, rare case, or
-small cost is a nit, whatever label it came with.
+```
+Review only. Do not edit tracked files, commit, push, or start subagents.
+Proof scripts go in /tmp/sol-loop-<id>/.
+Repo: <abs path> Base: <sha> Intent: <intent>
+Your slice: <file>:<start>-<end>. Read it and its direct callers and
+callees. Stay inside the slice.
+Hunt edge cases: empty, null, zero, one, last item, bounds, duplicates,
+error paths, retries, time zones and rounding, concurrent callers, the
+wrong tenant.
+Each finding names a concrete input or situation and the wrong result.
+When one small script or test proves it in a few minutes, write it under
+/tmp, run it, and paste the command and output. No case, no finding.
+At most 5 findings. "None found" is a valid answer.
+Reply:
+<id>.1 [blocker|should|nit] <file>:<line> <claim>.
+  Case: <input -> wrong result>. Proof: <command + output, or "reasoned">.
+  Fix: <suggestion>
+```
+
+## 4. Answer findings
+
+Drop any finding with no concrete case before it reaches the ledger. Merge
+duplicates across seats under the first id and note the others. Then check
+each finding and severity yourself. Another path, rare case, or small cost
+is a nit, whatever label it came with. When seats disagree, decide with
+evidence.
 
 - Agree: smallest fix. Prefer delete or narrow over new lock, cache,
   helper, or option. Fix the case that happened. Add one focused test
@@ -96,29 +165,50 @@ small cost is a nit, whatever label it came with.
 Update the ledger. Re-run checks and `git diff --shortstat <base>`. If
 review grew the diff, cut first. Do not agree just to end the loop.
 
-## 4. Next round
+## 5. Next round
 
-Start one only if budget remains and a blocker or should is open, behavior code
-changed, or approval does not cover the current behavior diff. Follow up the saved
-agent ID (`write_agent` in Copilot CLI), or start a fresh reviewer. Send the round 1 brief,
-the ledger (`fixed:` / `disagree:` / `declined:` + evidence), the same base
-diff, and the change since last round. Tell Sol: open ids and changed code only.
-Mark each old id `resolved` or `still open: <reason>`.
+Start one only if budget remains and a blocker or should is open, behavior
+code changed, or approval does not cover the current behavior diff.
 
-## 5. Stop and ship
+- Whole-diff seats: follow up each saved agent ID (`write_agent` in Copilot
+  CLI), or start fresh ones. Send the whole-diff brief, the ledger
+  (`fixed:` / `disagree:` / `declined:` + evidence), the same base diff, and
+  the change since last round. Ask for open ids and changed code only, with
+  each old id marked `resolved` or `still open: <reason>`.
+- Hot-spot seats: start a fresh Haiku only for a slice that a fix touched,
+  at most 3.
 
-Agreed: APPROVE on the current behavior diff, no blocker or should open,
-no concern of your own. Stuck: an item stays disputed after two replies,
-or budget ends. Show both sides in 2-3 lines each. The user decides.
-Budget end is not approval.
+## 6. Stop and ship
+
+Agreed: every whole-diff seat says APPROVE on the current behavior diff, no
+blocker or should is open, and you have no concern of your own. Stuck: an
+item stays disputed after two replies, or budget ends. Show both sides in
+2-3 lines each. The user decides. Budget end is not approval.
 
 Do not push during the loop. Push after agreement only if the user asked
 to push, ship, or update the PR. If you push to a PR, add above the model
-blurb:
+blurb in the PR description (never as a comment):
 
-`Reviewed with sol-loop: <N> rounds with <model>. Sol verdict: approved`.
+- Default: `Reviewed with sol-loop: <N> rounds with <model>. Sol verdict: approved`.
+  Add `on <effort>` only if verified.
+- Council:
 
-Add `on <effort>` only if verified.
+  ```markdown
+  ## Council review
 
-Report: rounds, model, what Sol changed, diff size before/after, fixed and
-declined findings with reasons, usage if exposed (else say not), pushed or not.
+  Rounds: 2
+
+  | Seat | Round 1 | Round 2 |
+  | --- | --- | --- |
+  | GPT Sol | 7/10 | 9/10 |
+  | Claude Sonnet | 8/10 | 9/10 |
+  | Grok | 6/10 | 9/10 |
+  ```
+
+  Write `no score` where a seat gave none; never invent one. With no PR, put
+  the table in the final reply.
+
+Report to the user: mode, rounds, models, what review changed, diff size
+before/after, fixed and declined findings with reasons, usage if exposed
+(else say not), pushed or not. In report mode, use the report format in
+`rubric.md`.
