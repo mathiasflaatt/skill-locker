@@ -8,7 +8,7 @@ Write prose output (reports, tickets, commit messages, PR descriptions, docs) in
 
 # File edits
 
-Edit Markdown and single-file text with the `edit` tool. Use `sed` only for one regex across many files, then confirm the change with `git diff`.
+Prefer the `edit` tool: it checks for one exact match, shows a diff, and session history records it. A script (`sed`, python) is fine when one call changes many places or files; make it fail loudly on a missed match, then confirm the change with `git diff`.
 
 # Subagent delegation
 
