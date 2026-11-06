@@ -57,6 +57,7 @@ Most skills in this repo are copies of work by other authors. Each copy keeps it
 
 - `bin/skill-locker`, `README.md`
 - `shared/skill-locker/`
+- `shared/review-pr/` (built on `sol-loop` and the tstack `council` skill by Theo Browne)
 - `machines/*/` skills
 - `extras/.agents/AGENTS.md`, `extras/.agents/hooks/`, `extras/.agents/lavish/` (house style for the Lavish skill by Kun Chen)
 - `extras/.copilot/agents/designer.agent.md` (uses impeccable and Matt Pocock's `prototype` skill)

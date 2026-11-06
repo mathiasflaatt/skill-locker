@@ -1,6 +1,6 @@
 ---
 name: sol-loop
-description: Review a change in a loop until it is approved, with GPT Sol on the whole diff, Haiku on hot spots, and a 3-provider council for one-way-door changes. Use when the user says "sol loop" or "council", asks to review a branch, a PR, or work-in-progress changes, or asks for a review report with no fixes.
+description: Review a change in a loop until it is approved, with GPT Sol on the whole diff, Haiku on hot spots, and a 3-provider council for one-way-door changes. Use when the user says "sol loop" or "council", asks to review and fix their own branch, PR, or work in progress, or asks for a review report on local changes. For feedback on a PR without fixing it, use review-pr.
 ---
 
 # sol-loop
