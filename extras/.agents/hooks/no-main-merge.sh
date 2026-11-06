@@ -30,6 +30,9 @@ for entry in $SKILL_LOCKER_PROTECTED_REPOS; do
 done
 [ -n "$REPO" ] || exit 0
 
+# Drop heredoc bodies: text written to a file (prompts, PR bodies) is not run.
+cmd=$(perl -0777 -pe '1 while s/<<-?[ \t]*([\x27"]?)(\w+)\1([^\n]*)\n(?:.*?\n)??[ \t]*\2[ \t]*(?=\n|\z)/HEREDOC$3/s' <<<"$cmd" 2>/dev/null) || exit 0
+
 deny() {
   local reason="Blocked by personal hook: in $REPO, agents must not merge into $BASE ($1). full-send is not allowed here; use full-stop: leave the PR ready and unmerged, and hand it to the user to merge."
   if [ "$claude" = true ]; then
@@ -66,9 +69,10 @@ if grep -Eq 'gh[[:space:]]+api' <<<"$cmd" &&
   deny "merge through gh api"
 fi
 
-# Direct push to main.
-if grep -Eq '(^|[^[:alnum:]_-])git[[:space:]]+push([[:space:]]|$)' <<<"$cmd" &&
-   grep -Eq '[[:space:]:+](refs/heads/)?'"$BASE"'([[:space:];&|]|$)' <<<"$(sed -E 's/.*git[[:space:]]+push//' <<<"$cmd")"; then
+# Direct push to main. Check only the arguments of each git push, up to the
+# next ; & | or newline, so a later "gh pr create --base main" is not a push.
+push_args=$(perl -ne 'print "$1\n" while /(?:^|[^\w-])git(?:\s+-C\s+\S+)?\s+push\b([^;&|\n]*)/g' <<<"$cmd" 2>/dev/null)
+if grep -Eq '[[:space:]:+](refs/heads/)?'"$BASE"'([[:space:]]|$)' <<<"$push_args"; then
   deny "git push to $BASE"
 fi
 
