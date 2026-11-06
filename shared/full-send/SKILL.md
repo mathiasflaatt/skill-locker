@@ -55,9 +55,11 @@ one appears.
 
    Run the mode and target the user picks; the grants in this skill start
    with that answer. No answer: take the safe path, full stop.
-1. **Finish the change.** Complete the goal from the user's request with the
-   smallest change that works. Fix the case that happened, not every case
-   that could. If you are on the default branch, create a branch first.
+1. **Finish the change.** Load the `ponytail` skill (full level) and keep it
+   active until step 7; tell every implementer subagent to follow it too.
+   Complete the goal from the user's request with the smallest change that
+   works. Fix the case that happened, not every case that could. If you are
+   on the default branch, create a branch first.
 2. **Prove it.** Get proof for every change you made. See "Proof".
 3. **Get feedback.** Use the `sol-loop` skill to verify changes.
 4. **File the PR** with the `pr` skill. Rebase onto the latest default

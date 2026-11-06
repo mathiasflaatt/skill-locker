@@ -12,6 +12,7 @@ Most skills in this repo are copies of work by other authors. Each copy keeps it
 | `domain-modeling` | Matt Pocock | [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/engineering/domain-modeling) | MIT | no |
 | `full-send` | Theo Browne | [t3dotgg/tstack](https://github.com/t3dotgg/tstack/tree/main/skills/full-send) | MIT | yes |
 | `full-stop` | Theo Browne | [t3dotgg/tstack](https://github.com/t3dotgg/tstack/tree/main/skills/full-stop) | MIT | yes |
+| `ponytail` | Dietrich Gebert | [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail/tree/main/skills/ponytail) | MIT | no |
 | `grilling` | Matt Pocock | [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/productivity/grilling) | MIT | yes |
 | `handoff` | Matt Pocock | [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/productivity/handoff) | MIT | yes |
 | `implement-spec` | Matt Pocock | [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/engineering/implement-spec) | MIT | yes |
