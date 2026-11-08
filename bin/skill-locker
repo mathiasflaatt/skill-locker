@@ -1,33 +1,311 @@
 #!/usr/bin/env bash
 # Sync user skills between this repo and the skill folders that agents read.
+# Machine folder id: first 12 lowercase hex chars of SHA256(salt + short hostname).
+# The salt and the hostname are UTF-8, concatenated with no separator and no newline.
+# Never hash a hostname without a salt. The salt stays in the local env file.
 set -euo pipefail
 
-REPO="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
-MACHINE="${SKILL_LOCKER_MACHINE:-$(hostname -s)}"
+DEFAULT_REPO="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
+REPO="${SKILL_LOCKER_REPO:-$DEFAULT_REPO}"
+LOCAL_ENV="${SKILL_LOCKER_LOCAL_ENV:-$HOME/.config/skill-locker/local.env}"
 AGENTS_DIR="${SKILL_LOCKER_AGENTS_DIR:-$HOME/.agents/skills}"
 CLAUDE_DIR="${SKILL_LOCKER_CLAUDE_DIR:-$HOME/.claude/skills}"
 BACKUP_DIR="$HOME/.skill-locker-backup/$(date +%Y%m%d-%H%M%S)"
 SCAN_DIRS=("$AGENTS_DIR" "$CLAUDE_DIR" "$HOME/.copilot/skills")
-EXTRAS_LIST="$REPO/machines/$MACHINE/extras"
+MACHINE=""
+EXTRAS_LIST=""
+PREPARED=0
 
 usage() {
   cat <<EOF
 Usage: skill-locker <command>
 
+  setup              Create the per-user salt outside the repo, if this machine
+                     does not have one, and create a machine folder for a new
+                     machine. Idempotent. Does not print the salt.
+  migrate [--from <legacy-name>]
+                     Rename the legacy machine folder to the derived id.
+                     Requires a salt. Refuses an unsalted id. Idempotent.
+                     Does not use SKILL_LOCKER_MACHINE as the hashed name.
+  machine-id [--derived]
+                     Print the folder id this command will use.
+                     --derived hashes the salt and the short hostname, and
+                     fails when the salt is unset.
   pull               Pull the latest skills, then link them.
   push [message]     Commit all skill changes, rebase on the remote, push, then link.
   link               Link repo skills into $AGENTS_DIR and $CLAUDE_DIR,
                      and link this machine's extras into \$HOME.
   adopt <name> [--machine]
                      Move a local skill into the repo (shared/ by default,
-                     machines/$MACHINE/ with --machine), then link it.
+                     machines/<id>/ with --machine), then link it.
   track <path>       Move a file or folder under \$HOME (for example ~/.agents/AGENTS.md)
                      into extras/ and use it on this machine.
   use <path>         Use an extra that is already in the repo on this machine.
   status             Show repo changes and local skills that the repo does not manage.
 
-Machine: $MACHINE (set SKILL_LOCKER_MACHINE to override)
+Folder id: SKILL_LOCKER_MACHINE when set, otherwise the derived id.
+The salt is SKILL_LOCKER_SALT in the local env file, never in the repo.
 EOF
+}
+
+guard_local_env_path() {
+  case "$LOCAL_ENV" in
+    /*) ;;
+    *) echo "error: the local env path must be absolute" >&2; exit 1 ;;
+  esac
+  case "$LOCAL_ENV" in
+    "$REPO"|"$REPO"/*)
+      echo "error: the local env file must stay outside the repo" >&2
+      exit 1
+      ;;
+  esac
+}
+
+# Load an allowlisted KEY=VALUE file without executing it.
+# A value already set in the environment wins.
+load_local_env() {
+  guard_local_env_path
+  [[ -f "$LOCAL_ENV" ]] || return 0
+  local line key val
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    line="${line%$'\r'}"
+    [[ "$line" =~ ^[[:space:]]*# ]] && continue
+    [[ "$line" =~ ^[[:space:]]*$ ]] && continue
+    [[ "$line" =~ ^[A-Za-z_][A-Za-z0-9_]*= ]] || continue
+    key="${line%%=*}"
+    val="${line#*=}"
+    case "$key" in
+      SKILL_LOCKER_SALT|SKILL_LOCKER_MACHINE|SKILL_LOCKER_HOSTNAME) ;;
+      *) continue ;;
+    esac
+    if [[ "$val" =~ ^\"(.*)\"$ ]]; then val="${BASH_REMATCH[1]}"; fi
+    if [[ "$val" =~ ^\'(.*)\'$ ]]; then val="${BASH_REMATCH[1]}"; fi
+    if [[ -z "${!key:-}" ]]; then
+      printf -v "$key" '%s' "$val"
+    fi
+  done < "$LOCAL_ENV"
+}
+
+valid_segment() {
+  [[ "$1" =~ ^[A-Za-z0-9][A-Za-z0-9._-]{0,62}$ ]]
+}
+
+short_hostname() {
+  local h
+  if [[ -n "${SKILL_LOCKER_HOSTNAME:-}" ]]; then
+    h="$SKILL_LOCKER_HOSTNAME"
+  else
+    h="$(hostname -s)"
+  fi
+  h="${h//$'\n'/}"
+  [[ -n "$h" ]] || { echo "error: short hostname is empty" >&2; exit 1; }
+  printf '%s' "$h"
+}
+
+sha256_hex() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum | awk 'NR==1 { print $1 }'
+  elif command -v shasum >/dev/null 2>&1; then
+    shasum -a 256 | awk 'NR==1 { print $1 }'
+  else
+    openssl dgst -sha256 | awk 'NR==1 { print $NF }'
+  fi
+}
+
+derive_id() { # short hostname on stdout; requires a salt
+  local host="$1" sum
+  [[ -n "${SKILL_LOCKER_SALT:-}" ]] || return 1
+  [[ "$SKILL_LOCKER_SALT" != *[[:space:]]* ]] || {
+    echo "error: SKILL_LOCKER_SALT must not contain whitespace" >&2
+    return 1
+  }
+  [[ -n "$host" ]] || return 1
+  sum="$(printf '%s' "${SKILL_LOCKER_SALT}${host}" | sha256_hex | tr 'A-F' 'a-f')"
+  [[ "$sum" =~ ^[0-9a-f]{64}$ ]] || return 1
+  printf '%s\n' "${sum:0:12}"
+}
+
+# Effective folder id. Does not invent an unsalted hash.
+# 1. SKILL_LOCKER_MACHINE
+# 2. Derived id when that folder exists
+# 3. Legacy short-hostname folder, when it exists
+# 4. Derived id for a new machine
+resolve_machine() {
+  local host derived
+  if [[ -n "${SKILL_LOCKER_MACHINE:-}" ]]; then
+    MACHINE="$SKILL_LOCKER_MACHINE"
+    return 0
+  fi
+  host="$(short_hostname)"
+  if [[ -n "${SKILL_LOCKER_SALT:-}" ]]; then
+    derived="$(derive_id "$host")" || return 1
+    if [[ -d "$REPO/machines/$derived" ]]; then
+      if [[ -d "$REPO/machines/$host" && "$host" != "$derived" ]]; then
+        echo "warning: legacy and derived machine folders both exist; using the derived id" >&2
+      fi
+      MACHINE="$derived"
+      return 0
+    fi
+    if [[ -d "$REPO/machines/$host" ]]; then
+      echo "warning: derived machine folder is absent; still using the legacy folder. Run 'skill-locker migrate'." >&2
+      MACHINE="$host"
+      return 0
+    fi
+    MACHINE="$derived"
+    return 0
+  fi
+  if [[ -d "$REPO/machines/$host" ]]; then
+    echo "warning: SKILL_LOCKER_SALT is unset; using the legacy machine folder. Run 'skill-locker setup'." >&2
+    MACHINE="$host"
+    return 0
+  fi
+  return 1
+}
+
+prepare() {
+  [[ "$PREPARED" == 1 ]] && return 0
+  load_local_env
+  if ! resolve_machine; then
+    echo "error: no machine id. Set SKILL_LOCKER_MACHINE, or run 'skill-locker setup'." >&2
+    exit 1
+  fi
+  valid_segment "$MACHINE" || { echo "error: machine id is not a single path segment" >&2; exit 1; }
+  EXTRAS_LIST="$REPO/machines/$MACHINE/extras"
+  PREPARED=1
+}
+
+ensure_trailing_newline() {
+  [[ -s "$1" ]] || return 0
+  local last
+  last="$(tail -c1 "$1" | od -An -tu1 | tr -d '[:space:]')"
+  [[ "$last" == "10" ]] || printf '\n' >> "$1"
+}
+
+write_salt() {
+  local salt="$1" tmp
+  umask 077
+  tmp="$(mktemp "${LOCAL_ENV}.XXXXXX")"
+  if [[ -f "$LOCAL_ENV" ]] && grep -q '^SKILL_LOCKER_SALT=' "$LOCAL_ENV"; then
+    awk -v s="$salt" 'BEGIN{done=0} /^SKILL_LOCKER_SALT=/ && !done {print "SKILL_LOCKER_SALT=" s; done=1; next} {print} END{if (!done) print "SKILL_LOCKER_SALT=" s}' "$LOCAL_ENV" > "$tmp"
+  else
+    if [[ -f "$LOCAL_ENV" ]]; then
+      cat "$LOCAL_ENV" > "$tmp"
+      ensure_trailing_newline "$tmp"
+    fi
+    printf 'SKILL_LOCKER_SALT=%s\n' "$salt" >> "$tmp"
+  fi
+  chmod 600 "$tmp"
+  mv "$tmp" "$LOCAL_ENV"
+  chmod 600 "$LOCAL_ENV"
+}
+
+cmd_setup() {
+  local salt id host dir
+  load_local_env
+  dir="$(dirname "$LOCAL_ENV")"
+  umask 077
+  mkdir -p "$dir"
+  chmod 700 "$dir" || true
+  if [[ ! -f "$LOCAL_ENV" ]]; then
+    printf '%s\n' '# Local skill-locker settings. Never commit this file.' > "$LOCAL_ENV"
+    chmod 600 "$LOCAL_ENV"
+  else
+    chmod 600 "$LOCAL_ENV" || true
+  fi
+  if [[ -n "${SKILL_LOCKER_SALT:-}" && "$SKILL_LOCKER_SALT" == *[[:space:]]* ]]; then
+    echo "error: SKILL_LOCKER_SALT must not contain whitespace" >&2
+    exit 1
+  fi
+  if [[ -z "${SKILL_LOCKER_SALT:-}" ]]; then
+    salt="$(openssl rand -hex 32)"
+    write_salt "$salt"
+    SKILL_LOCKER_SALT="$salt"
+    unset salt
+  elif ! grep -q '^SKILL_LOCKER_SALT=.' "$LOCAL_ENV"; then
+    # The salt was only in the environment. Keep it in the local env file.
+    write_salt "$SKILL_LOCKER_SALT"
+  fi
+  host="$(short_hostname)"
+  valid_segment "$host" || { echo "error: short hostname is not a single path segment" >&2; exit 1; }
+  id="$(derive_id "$host")"
+  # A new machine gets the derived folder. An existing legacy folder is left
+  # for migrate, so setup does not hide it behind an empty derived folder.
+  if [[ ! -d "$REPO/machines/$id" && ! -d "$REPO/machines/$host" ]]; then
+    mkdir -p "$REPO/machines/$id"
+    if [[ ! -e "$REPO/machines/$id/extras" ]]; then
+      : > "$REPO/machines/$id/extras"
+    fi
+  fi
+  printf 'machine id: %s\n' "$id"
+  if [[ -d "$REPO/machines/$host" && ! -d "$REPO/machines/$id" ]]; then
+    echo "legacy machine folder still in use; run 'skill-locker migrate' to switch to this id"
+  fi
+  echo "salt is stored in the local env file"
+}
+
+cmd_migrate() {
+  local from="" host id src dest
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --from)
+        [[ $# -ge 2 ]] || { echo "error: migrate --from needs a legacy folder name" >&2; exit 1; }
+        from="$2"
+        shift 2
+        ;;
+      *) echo "error: unknown migrate argument" >&2; exit 1 ;;
+    esac
+  done
+  load_local_env
+  [[ -n "${SKILL_LOCKER_SALT:-}" ]] || { echo "error: SKILL_LOCKER_SALT is unset; refusing an unsalted migration" >&2; exit 1; }
+  if [[ -n "$from" ]]; then
+    host="$from"
+  else
+    host="$(short_hostname)"
+  fi
+  valid_segment "$host" || { echo "error: legacy folder name is not a single path segment" >&2; exit 1; }
+  id="$(derive_id "$host")"
+  [[ "$id" =~ ^[0-9a-f]{12}$ ]] || { echo "error: derived id is not 12 hex chars" >&2; exit 1; }
+  src="$REPO/machines/$host"
+  dest="$REPO/machines/$id"
+  if [[ "$host" == "$id" ]]; then
+    echo "machine folder already uses the derived id"
+    return 0
+  fi
+  if [[ -d "$dest" && ! -e "$src" ]]; then
+    echo "machine folder already uses the derived id"
+    return 0
+  fi
+  if [[ ! -e "$src" && ! -d "$dest" ]]; then
+    echo "error: no machine folder to migrate" >&2
+    exit 1
+  fi
+  if [[ -e "$src" && -e "$dest" ]]; then
+    echo "error: both the legacy folder and the derived folder exist; not merging" >&2
+    exit 1
+  fi
+  if git -C "$REPO" rev-parse --is-inside-work-tree >/dev/null 2>&1 \
+    && [[ -n "$(git -C "$REPO" ls-files -- "machines/$host")" ]]; then
+    git -C "$REPO" mv -- "machines/$host" "machines/$id"
+  else
+    mv -- "$src" "$dest"
+  fi
+  echo "migrated machine folder to $id"
+}
+
+cmd_machine_id() {
+  load_local_env
+  if [[ "${1:-}" == "--derived" ]]; then
+    [[ -n "${SKILL_LOCKER_SALT:-}" ]] || { echo "error: SKILL_LOCKER_SALT is unset; refusing an unsalted id" >&2; exit 1; }
+    derive_id "$(short_hostname)"
+    return 0
+  fi
+  [[ $# -eq 0 ]] || { echo "error: unknown machine-id argument" >&2; exit 1; }
+  if ! resolve_machine; then
+    echo "error: no machine id. Set SKILL_LOCKER_MACHINE, or run 'skill-locker setup'." >&2
+    exit 1
+  fi
+  valid_segment "$MACHINE" || { echo "error: machine id is not a single path segment" >&2; exit 1; }
+  printf '%s\n' "$MACHINE"
 }
 
 # Print "name<TAB>path" for each skill this machine uses. Machine skills override shared skills.
@@ -86,7 +364,7 @@ cmd_link() {
 }
 
 # Extras are paths relative to $HOME, stored at extras/<path>. Each machine opts in
-# by listing paths in machines/<host>/extras.
+# by listing paths in machines/<id>/extras.
 extras_for() { [[ -f "$1" ]] && grep -vE '^\s*(#|$)' "$1" || true; }
 
 link_extras() {
@@ -148,7 +426,7 @@ cmd_pull() {
 }
 
 cmd_push() {
-  local msg="${1:-chore: update skills from $MACHINE}"
+  local msg="${1:-chore: update skills}"
   git -C "$REPO" add -A
   if ! git -C "$REPO" diff --cached --quiet; then
     git -C "$REPO" commit -q -m "$msg"
@@ -189,12 +467,15 @@ cmd_status() {
 }
 
 case "${1:-}" in
-  pull) cmd_pull ;;
-  push) shift; cmd_push "$@" ;;
-  link) cmd_link ;;
-  adopt) shift; cmd_adopt "$@" ;;
-  track) shift; cmd_track "$@" ;;
-  use) shift; cmd_use "$@" ;;
-  status) cmd_status ;;
+  setup) cmd_setup ;;
+  migrate) shift; cmd_migrate "$@" ;;
+  machine-id) shift; cmd_machine_id "$@" ;;
+  pull) prepare; cmd_pull ;;
+  push) prepare; shift; cmd_push "$@" ;;
+  link) prepare; cmd_link ;;
+  adopt) prepare; shift; cmd_adopt "$@" ;;
+  track) prepare; shift; cmd_track "$@" ;;
+  use) prepare; shift; cmd_use "$@" ;;
+  status) prepare; cmd_status ;;
   *) usage; [[ -z "${1:-}" || "$1" == -h || "$1" == --help ]] || exit 1 ;;
 esac
