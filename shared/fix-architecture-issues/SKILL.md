@@ -1,6 +1,6 @@
 ---
 name: fix-architecture-issues
-description: Implement the open `improve-codebase` architecture issues, one T3 delegate per issue, each running the implement-spec flow to a ready PR. Use when the user says "fix architecture issues" or names `improve-codebase` issues to implement.
+description: Implement the open `improve-codebase` architecture issues, one T3 delegate per issue, each running the implement-spec flow to a draft PR. Use when the user says "fix architecture issues" or names `improve-codebase` issues to implement.
 disable-model-invocation: true
 ---
 
@@ -29,7 +29,7 @@ Brief (fill in `<n>`, `<title>` and `<owner/repo>` from `gh repo view --json nam
 
 > Implement GitHub issue #<n> "<title>" in <owner/repo>. Load the `implement-spec` skill and follow it: the issue is the spec, each unchecked acceptance criterion is a ticket. Start one native subagent per ticket, each in its own `git worktree add` checkout, as the skill says; set `model` on each spawn to the newest version of the chosen family. Read the issue body and its Related issues first; the Proposed deepening is the design, so keep to it.
 >
-> Name the integration branch `arch/<n>-<slug>`. Write the PR body with the `pr` skill and put `Closes #<n>` in it. When the change is user-visible and the repo has a `verify-platform` skill, prove it with that skill. Replace the final `code-review` step with `sol-loop`. Finish with a ready PR, all acceptance criteria ticked in the issue, and the verify gate from the repo's `AGENTS.md` green.
+> Name the integration branch `arch/<n>-<slug>`. Open the PR as a draft (`gh pr create --draft`), so it does not take a shared deploy environment such as staging, and never mark it ready. Write the PR body with the `pr` skill and put `Closes #<n>` in it. When the change is user-visible and the repo has a `verify-platform` skill, prove it with that skill. Replace the final `code-review` step with `sol-loop`. Finish with a draft PR, all acceptance criteria ticked in the issue, and the verify gate from the repo's `AGENTS.md` green.
 >
 > When a decision is open, find the answer first in the issue, its Related issues, the repo's ADRs, domain docs, glossaries and code. Ask a question with your ask-question tool only when none of these answers it and a wrong guess would change the design. Put the options and your recommendation in the question.
 >
@@ -50,11 +50,11 @@ Contact the user directly only when the work cannot continue without the user's 
 
 When a delegate finishes, read it with `task_status`.
 
-- **Ready PR:** link it with `link_pull_request`. Check that the issue's acceptance criteria are ticked. Start the next issue in that lane (step 2).
+- **Draft PR:** check that it is still a draft, link it with `link_pull_request`. Check that the issue's acceptance criteria are ticked. Start the next issue in that lane (step 2).
 - **Blocked or failed:** comment on the issue with the blocker and what is done, remove your assignee, and start the next issue in that lane. Tell the user in the final report.
 
-Done when every queued issue has a linked ready PR or a blocker comment.
+Done when every queued issue has a linked draft PR or a blocker comment.
 
 ## 5. Report
 
-Give one table: issue (linked title), severity, PR, state (ready, blocked, skipped) and the open item, if any. List the decisions you made for the delegates, so the user can overrule them in review.
+Give one table: issue (linked title), severity, PR, state (draft, blocked, skipped) and the open item, if any. List the decisions you made for the delegates, so the user can overrule them in review.
