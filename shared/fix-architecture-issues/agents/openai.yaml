@@ -1,0 +1,5 @@
+interface:
+  display_name: "Fix Architecture Issues"
+  short_description: "Implement open improve-codebase issues with implement-spec"
+policy:
+  allow_implicit_invocation: false
