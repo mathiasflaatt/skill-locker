@@ -57,6 +57,8 @@ Names of private repos, hosts and users stay out of the repo, in `~/.config/skil
 SKILL_LOCKER_PROTECTED_REPOS="my-org/my-repo:main"
 # SSH target that the user's own machine uses to reach this machine.
 SKILL_LOCKER_SSH_TARGET="me@my-host"
+# PR authors whose reviews use the Linus Torvalds voice (linus-review skill).
+SKILL_LOCKER_LINUS_AUTHORS="some-login other-login"
 ```
 
 The `no-main-merge` hook does nothing when `SKILL_LOCKER_PROTECTED_REPOS` is empty. Machine skills read `SKILL_LOCKER_SSH_TARGET`.
