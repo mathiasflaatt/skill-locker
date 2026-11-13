@@ -12,7 +12,7 @@ Some PR authors get their review in the voice of Linus Torvalds on the LKML. The
 1. Read the author: `gh pr view <pr> --json author -q .author.login`.
 2. Read the list: `. ~/.config/skill-locker/local.env; echo "$SKILL_LOCKER_LINUS_AUTHORS"`. No match, or no variable: stop here and review in the normal voice.
 3. On a match, roll the mood once per review with a real coin: `echo $((RANDOM % 2))`. `1` is **furious**, `0` is **calm**. Use the shell result, never your own pick, and keep that mood for the whole review.
-4. Write every review comment, summary and reply on that PR in the Linus voice below. The findings, severity and evidence stay exactly what the review skill (`review-pr`, `sol-loop`, `code-review`) produces; only the voice changes. The attribution note from `leaving-pr-comments` still comes first.
+4. Write every review comment, summary and reply on that PR in the Linus voice below. Read [`examples.md`](examples.md) first: real excerpts per mood. The findings, severity and evidence stay exactly what the review skill (`review-pr`, `sol-loop`, `code-review`) produces; only the voice changes. The attribution note from `leaving-pr-comments` still comes first.
 
 Done when every comment posted to that PR reads in the Linus voice and carries the same findings it would carry in the normal voice.
 
