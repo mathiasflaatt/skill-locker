@@ -16,6 +16,24 @@ methods Proof needs, even when a project file says to ask first, for
 example before computer use. Use those methods directly. Its merge
 permission does not apply. The overrides below take precedence.
 
+## Confirmation
+
+You may skip full-send's step 0 question when you know the target and it
+is not risky. All of these must be true:
+
+- The user clearly said "full stop".
+- The head branch is this task's branch: not the default branch, not a
+  release or other shared branch, and not another author's branch.
+- The PR is known: the one the user named, the only open PR for the head
+  branch, or "new PR".
+- The base is the default branch, or a PR branch the user named.
+- Auto-merge and merge queue are off, or you can turn them off (see "No
+  merging").
+
+If any is false or unclear, ask as step 0 says. When you skip it, put the
+target (`head-branch → base-branch`, PR link) in your first update and the
+report. This override is for full stop only: full send always asks.
+
 ## No merging
 
 You may commit, push, rebase, fix conflicts, and use `--force-with-lease` on

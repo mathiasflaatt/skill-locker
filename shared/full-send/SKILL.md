@@ -43,8 +43,9 @@ one appears.
 ## Steps
 
 0. **Confirm the mode and the merge target.** Before any other action, ask
-   with the harness's question tool (see "Asking the user"). The question
-   shows:
+   with the harness's question tool (see "Asking the user"). Full send
+   never skips this question, even when the target looks safe. The
+   question shows:
    - the user's words, quoted, and the mode you heard;
    - the target: PR link (or "new PR"), `head-branch → base-branch`, and
      whether the base is the default branch or another PR's branch;
