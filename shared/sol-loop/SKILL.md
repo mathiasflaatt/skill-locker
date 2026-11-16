@@ -1,14 +1,15 @@
 ---
 name: sol-loop
-description: Review a change in a loop until it is approved, with GPT Sol on the whole diff, Haiku on hot spots, and a 3-provider council for one-way-door changes. Use when the user says "sol loop" or "council", asks to review and fix their own branch, PR, or work in progress, or asks for a review report on local changes. For feedback on a PR without fixing it, use review-pr.
+description: Review a change in a loop until it is approved, with one GPT Sol reviewer at high effort. A 3-provider council runs only when asked. Use when the user says "sol loop" or "council", asks to review and fix their own branch, PR, or work in progress, or asks for a review report on local changes. For feedback on a PR without fixing it, use review-pr.
 ---
 
 # sol-loop
 
-Review a change in rounds and fix between rounds, until the reviewers
-approve. GPT Sol judges the whole diff. Up to 3 Haiku reviewers each dig
-into one hot spot. On one-way doors, a council of three providers reviews
-the whole diff.
+Review a change in rounds and fix between rounds, until the reviewer
+approves. One GPT Sol seat at high effort reviews the whole diff. The
+council (three providers plus Haiku hot spots) is expensive: it runs only
+when the user says "council" or a caller skill (such as `review-pr`) asks
+for it.
 
 Make the smallest changes that satisfy the reviewers. Fight scope creep,
 and push back with evidence.
@@ -17,21 +18,23 @@ and push back with evidence.
 
 | Mode | When | Whole-diff seats | Hot-spot seats |
 | --- | --- | --- | --- |
-| default | any review | Sol | ≤3 Haiku |
-| council | user says "council", or the diff is a one-way door | Sol, Sonnet, Grok | ≤3 Haiku |
+| default | any review | Sol | none |
+| council | user says "council", or a caller skill asks for it | Sol, Sonnet, Grok | ≤3 Haiku |
 | report | user wants a review with no fixes | as default or council | as default or council |
 
 A **one-way door** is a change that is hard to undo after it ships: a
 schema or migration, deleting or rewriting stored data, auth, RLS or tenant
 isolation, a public API contract or wire format that others read, or
-infrastructure state (Terraform). When you pick council mode on your own,
-say why in one line.
+infrastructure state (Terraform). A one-way door does not start the
+council on its own: it extends the budget (see Budget) and tells Sol where
+to look hardest. If you think a diff needs the council, say why in one line
+and ask the user.
 
 Report mode runs steps 1–3 once, fixes nothing, and replies in the report
 format of `rubric.md`.
 
 Seats use the newest model of each family in the `task` tool's model list:
-Sol (`gpt-6.1-sol`), Sonnet (`claude-sonnet-5.5`), Grok (`grok-4.7`),
+Sol (`gpt-6.1-sol`, `reasoning_effort: "high"`), Sonnet (`claude-sonnet-5.5`), Grok (`grok-4.7`),
 Haiku (`claude-haiku-5.5`). Use a version the user names. If a seat's model
 is not available, report the blocker; a seat runs only on its own family.
 
@@ -44,7 +47,7 @@ is not available, report the blocker; a seat runs only on its own family.
   when the user asks.
 - Stop early if a round returns only nits. Declined nits and comment,
   doc, or format-only fixes need no new round.
-- Per round: one agent per seat. Reviewers must not start subagents.
+- Per round: one agent per seat. Default mode is one Sol agent per round. Reviewers must not start subagents.
 - Keep a ledger: id, seat, severity, outcome, usage if returned. Never
   guess it.
 
@@ -81,18 +84,19 @@ Gather for the brief:
   one script run or many users at once.
 - **Mode:** default, council or report, from the table above.
 
-## 2. Hot spots
+## 2. Hot spots (council only)
 
-Rank the changed hunks by risk: one-way-door code first, then shared state
-and concurrency, input parsing, money and time math, then the largest
-behavior hunk. Take one hot spot per distinct risky area, at most 3, each
+Skip this step in default mode. Rank the changed hunks by risk:
+one-way-door code first, then shared state and concurrency, input
+parsing, money and time math, then the largest behavior hunk. Take one hot spot per distinct risky area, at most 3, each
 a `file:start-end` range of about 80 lines or fewer. A diff with no risky
 hunk (docs, renames, formatting) gets no Haiku seat.
 
 ## 3. Start reviewers
 
 Start every seat in one response with the `task` tool: `agent_type:
-"code-review"`, `mode: "background"`, `model` set per seat. Elsewhere
+"code-review"`, `mode: "background"`, `model` set per seat. Set `reasoning_effort: "high"`
+on the Sol seat. Elsewhere
 (Claude Code, Codex, an Orca terminal), use native subagents on the same
 models. Save each `agent_id`. Record model and effort only if exposed.
 
@@ -175,8 +179,8 @@ code changed, or approval does not cover the current behavior diff.
   (`fixed:` / `disagree:` / `declined:` + evidence), the same base diff, and
   the change since last round. Ask for open ids and changed code only, with
   each old id marked `resolved` or `still open: <reason>`.
-- Hot-spot seats: start a fresh Haiku only for a slice that a fix touched,
-  at most 3.
+- Hot-spot seats (council only): start a fresh Haiku only for a slice
+  that a fix touched, at most 3.
 
 ## 6. Stop and ship
 

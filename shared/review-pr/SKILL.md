@@ -1,13 +1,13 @@
 ---
 name: review-pr
-description: Council review of a GitHub pull request in the PR-body format of the `pr` skill (Summary, Evidence, Merge Danger, linked issues) plus MoSCoW findings, shown in the session and optionally posted as a PR review. Use when the user says "review PR", gives a PR number or URL to review, or wants feedback on a PR without fixing it.
+description: Review of a GitHub pull request (one GPT Sol seat; a council only when the PR touches auth or database migrations) in the PR-body format of the `pr` skill (Summary, Evidence, Merge Danger, linked issues) plus MoSCoW findings, shown in the session and optionally posted as a PR review. Use when the user says "review PR", gives a PR number or URL to review, or wants feedback on a PR without fixing it.
 ---
 
 # review-pr
 
 Review one pull request without fixing it. Verify its claims (evidence,
-merge danger, closed issues) instead of trusting them, scale the review to
-how dangerous the merge is, sort findings into MoSCoW, and show the result
+merge danger, closed issues) instead of trusting them, pick the review
+depth with the council gate, sort findings into MoSCoW, and show the result
 in the session. Post to the PR only if the user says so.
 
 Single sources, used as written:
@@ -50,9 +50,23 @@ spec for the seats.
 **Claims.** Copy the PR body's Evidence and Merge Danger sections as the
 author's claims. Missing sections are claims of "none".
 
-## 2. Merge danger and depth
+## 2. Council gate, merge danger and depth
 
-Rate the merge yourself from the diff, before the council runs:
+**Council gate.** The council is expensive. Run it only when the PR
+touches either of these; otherwise run one Sol seat:
+
+- **Auth:** authentication or authorization code or config: login,
+  sessions, tokens or JWTs, identity providers (OAuth, OIDC, Cognito,
+  Entra), API keys and shared secrets, permission or role checks,
+  policies, tenant guards and RLS.
+- **Database migrations:** any migration file or schema change: an EF or
+  other ORM migration, a `.sql` migration or runner script, a model
+  snapshot, or a DbContext model change that needs a migration.
+
+Check the changed file paths and the diff content; a path name alone is
+not enough. Name the files that open the gate, or say "gate closed".
+
+Rate the merge yourself from the diff, before the seats run:
 
 - **Door:** one-way if it matches a `sol-loop` one-way door, else two-way.
 - **Blast radius:** _contained_ (one module, internal callers only),
@@ -64,11 +78,14 @@ Depth follows the rating; apply every row that matches:
 
 | Rating | Depth |
 | --- | --- |
-| any | council: Sol, Sonnet, Grok, plus ≤3 Haiku hot spots |
-| one-way door | ≤5 Haiku hot spots; name the one fact the merge is safe because of, and prove it by running code (blast-radius steps 2 and 5) |
-| wide or public blast | add a blast seat (`claude-sonnet-5.5`) |
+| gate closed | sol-loop default: one Sol seat (`gpt-6.1-sol`, high effort), no hot spots, no blast seat |
+| gate open | council: Sol, Sonnet, Grok, plus ≤3 Haiku hot spots |
+| gate open and one-way door | ≤5 Haiku hot spots; name the one fact the merge is safe because of, and prove it by running code (blast-radius steps 2 and 5) |
+| gate open and wide or public blast | add a blast seat (`claude-sonnet-5.5`) |
 
-Say the rating and depth in one line before you start the seats.
+With the gate closed, still rate door and blast radius for the report and
+tell Sol where the risk is. Say the gate, rating and depth in one line
+before you start the seats.
 
 ## 3. Verify the evidence
 
@@ -78,10 +95,10 @@ it fails before the change. Record each claim as _reproduced_ (command and
 result), _not reproduced_ (command and what happened instead) or _not run_
 (why). With no named evidence, run the tests that cover the changed files.
 
-## 4. Council
+## 4. Seats
 
-Find hot spots as `sol-loop` step 2 says, up to the cap from step 2 here.
-Start all seats in one response with the `sol-loop` step 3 briefs. Set
+Gate open: find hot spots as `sol-loop` step 2 says, up to the cap from
+step 2 here. Gate closed: skip hot spots. Start all seats in one response with the `sol-loop` step 3 briefs. Set
 `Repo:` to the worktree, use `git diff <base> <headRefOid>`, put the issue
 criteria in `Spec:`, and add:
 
@@ -166,7 +183,7 @@ and its proof, when step 2 asked for one>
 ### Won't
 - <id> <claim>: <why not>
 
-## Council
+## Seats
 
 | Seat | Score |
 | --- | --- |
@@ -178,7 +195,7 @@ Not checked: <one line, if any>
 ```
 
 Number findings across groups, so the user can say "post 1 and 3". Skip
-empty groups. Write `no score` where a seat gave none; never invent one.
+empty groups. With the gate closed, the Seats table has only GPT Sol. Write `no score` where a seat gave none; never invent one.
 
 ## 7. Post, if asked
 
