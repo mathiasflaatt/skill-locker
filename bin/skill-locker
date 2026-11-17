@@ -9,6 +9,7 @@ CLAUDE_DIR="${SKILL_LOCKER_CLAUDE_DIR:-$HOME/.claude/skills}"
 BACKUP_DIR="$HOME/.skill-locker-backup/$(date +%Y%m%d-%H%M%S)"
 SCAN_DIRS=("$AGENTS_DIR" "$CLAUDE_DIR" "$HOME/.copilot/skills")
 EXTRAS_LIST="$REPO/machines/$MACHINE/extras"
+IGNORE_FILE="${SKILL_LOCKER_IGNORE:-$HOME/.config/skill-locker/ignore}"
 
 usage() {
   cat <<EOF
@@ -25,6 +26,8 @@ Usage: skill-locker <command>
                      into extras/ and use it on this machine.
   use <path>         Use an extra that is already in the repo on this machine.
   status             Show repo changes and local skills that the repo does not manage.
+  ignore <name>...   Hide local skills from status (not synced; stored in $IGNORE_FILE).
+  check              Lint the repo's skills (frontmatter, links, skill names, credits).
 
 Machine: $MACHINE (set SKILL_LOCKER_MACHINE to override)
 EOF
@@ -147,8 +150,18 @@ cmd_pull() {
   cmd_link
 }
 
+cmd_check() { python3 "$REPO/bin/check-skills.py"; }
+
+cmd_ignore() {
+  [[ $# -gt 0 ]] || { echo "usage: skill-locker ignore <name>..." >&2; exit 2; }
+  mkdir -p "$(dirname "$IGNORE_FILE")"
+  local n
+  for n in "$@"; do grep -qxF "$n" "$IGNORE_FILE" 2>/dev/null || echo "$n" >> "$IGNORE_FILE"; done
+}
+
 cmd_push() {
   local msg="${1:-chore: update skills from $MACHINE}"
+  cmd_check || { echo "error: check failed; fix the errors above, then push again" >&2; exit 1; }
   git -C "$REPO" add -A
   if ! git -C "$REPO" diff --cached --quiet; then
     git -C "$REPO" commit -q -m "$msg"
@@ -182,6 +195,7 @@ cmd_status() {
     for s in "$d"/*/; do
       s="${s%/}"
       [[ -d "$s" && ! -L "$s" ]] || continue
+      grep -qxF "$(basename "$s")" "$IGNORE_FILE" 2>/dev/null && continue
       ((found++)) || echo "Local skills not in the repo (use 'skill-locker adopt <name>'):"
       echo "  $s"
     done
@@ -196,5 +210,7 @@ case "${1:-}" in
   track) shift; cmd_track "$@" ;;
   use) shift; cmd_use "$@" ;;
   status) cmd_status ;;
+  check) cmd_check ;;
+  ignore) shift; cmd_ignore "$@" ;;
   *) usage; [[ -z "${1:-}" || "$1" == -h || "$1" == --help ]] || exit 1 ;;
 esac

@@ -28,9 +28,9 @@ SL="$(readlink -f ~/.agents/skills/skill-locker)/../../bin/skill-locker"
    - To delete or rename a skill, use `git mv` or `git rm` in the repo.
    - To sync a new agent file under `$HOME`, run `"$SL" track <path>`. To use a synced extra on this machine, run `"$SL" use <path>`.
    - To give a skill to one custom agent only, put it in `extras/.agents/agent-skills/<agent>/<skill>/` and make the agent file read it by path. This keeps it out of the default skill list.
-3. **Push.** Run `"$SL" push "<conventional commit message>"`, for example `feat: add tdd skill`. This commits, rebases on the remote, pushes and links again.
+3. **Push.** Run `"$SL" push "<conventional commit message>"`, for example `feat: add tdd skill`. It runs `"$SL" check` first and stops on an error: fix it, or add a name that lives outside the repo to `external-skills.txt`. Then it commits, rebases on the remote, pushes and links again.
 
-The work is done when `"$SL" status` shows a clean branch that is level with `origin`, and lists no local skills outside the repo.
+The work is done when `"$SL" status` shows a clean branch that is level with `origin`, and lists no local skills outside the repo. A local skill the user keeps outside the repo on purpose goes in `"$SL" ignore <name>`.
 
 ## Gotchas
 

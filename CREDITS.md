@@ -59,8 +59,10 @@ Most skills in this repo are copies of work by other authors. Each copy keeps it
 
 ## My own work (MIT, see `LICENSE`)
 
-- `bin/skill-locker`, `README.md`
+- `bin/skill-locker`, `bin/check-skills.py`, `external-skills.txt`, `README.md`
 - `shared/skill-locker/`
+- `shared/fix-architecture-issues/` (runs Matt Pocock's `implement-spec` flow)
+- `shared/linus-review/`
 - `shared/review-pr/` (built on `sol-loop` and the tstack `council` skill by Theo Browne)
 - `machines/*/` skills
 - `extras/.agents/AGENTS.md`, `extras/.agents/hooks/`, `extras/.agents/lavish/` (house style for the Lavish skill by Kun Chen)

@@ -1,0 +1,30 @@
+# Names that `skill-locker check` accepts as skills without a folder in this repo.
+# One name per line. Keep each group sorted.
+
+# Local-only skills on some machines (plugins or other installs). A machine without them skips that route.
+discover-azure-skills
+find-docs
+frontend-design
+kubernetes-manifests
+mcp-server-patterns
+python-patterns
+python-testing
+rust-patterns
+rust-testing
+
+# pstack names that extras/.agents/pstack/claude-code.md maps or tells the agent to skip.
+benchmark-checklist
+poteto-mode
+show-me-your-work
+typescript-best-practices
+
+# Bold terms in copied skills that are not skill names.
+0-1
+breadth-first
+code-first
+comp-first
+model-invoked
+no-ops
+one-shot
+red-capable
+user-invoked
