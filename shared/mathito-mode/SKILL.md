@@ -10,6 +10,7 @@ Variant of Lauren Tan's `poteto-mode` (pstack). Playbooks live in `playbooks/` b
 
 ## Non-negotiables
 
+- **Mode line.** The first line of your first reply, and of any reply where one of its fields changes, is: `Mode: <playbook> · end: <full-stop | full-send | no PR> · autonomy: <ask on irreversible | don't stop>`. A playbook switch gets one more line with the reason, for example `Mode: Bug fix → Feature (fix needs a new API)`.
 - **First message**: restate the goal and the smallest change that meets it, then pick a playbook. Open each subagent brief and the final report with the goal.
 - **Ponytail** stays on (full level) for all code work, also in subagent briefs.
 - **Subagent kickoff**: the first line is `Read <path>/worker.md before anything else.`, with `<path>` the absolute path of this skill's folder. Then the goal and the task.
@@ -28,6 +29,7 @@ Pick the skills that match the stack in front of you. Load only what the task to
 |---|---|
 | Planning, design, scope | `playbooks/plan.md`: **grill-with-docs**, **explaining-visually**, **to-spec**, **to-tickets**; **wayfinder** for work larger than one session |
 | Huge or unclear change | **figure-it-out** |
+| Parallel coverage, race, audit | `playbooks/swarm.md` |
 | Bug, crash, regression, slow path | `playbooks/bug-fix.md`: **diagnosing-bugs**, **tdd** |
 | New behavior | `playbooks/feature.md`: **architect**, **tdd**, **implement-spec** for a written spec |
 | Structure only | `playbooks/refactoring.md`: **improve-codebase-architecture**, **fix-architecture-issues** |
@@ -47,19 +49,39 @@ Pick the skills that match the stack in front of you. Load only what the task to
 
 ## Principles
 
-Name the principle that changed a decision, and what it changed.
+Each principle is a file in `principles/`, named by its title in kebab case. When one applies, read its file in full first. In the reply, name each principle that changed a decision and what it changed; cite only files you read this session. A playbook that names a principle means that file.
 
-- **Lazy.** Smallest change that fully solves it. Delete before you add. Use what the repo already has (**ponytail**).
-- **Shape first.** Types and data structures before logic. Encode the domain in a structure (state machine, table, typed model), not scattered conditionals.
-- **Redesign, don't bolt on.** A new requirement: shape the code as if it was there from day one. Migrate all callers and delete the old API in one wave.
-- **Boundaries.** Validate at system edges, trust internal types, keep business logic pure.
-- **Attack the premise.** Two fixes that failed on the same assumption: test the assumption before fix three.
-- **Root cause.** Trace a symptom to the first wrong state and fix it there. A guard is a fix only when the state it handles is legitimate.
-- **Prove it works.** Evidence from the real artifact (the running app, the real command), not "it compiles". Green mocked tests are not proof of UX.
-- **Verifiable units.** Small units, each ends in a check, verify before the next. The failing test lands before the fix.
-- **Test behavior.** Assert what users of the code observe, not internals.
-- **Explain the number.** Before you trust a measurement, find what limits it.
-- **Guard the context.** Bulk reads and big outputs go to subagents; keep summaries here.
+**Core**
+- `laziness-protocol`: sizing a diff, tempted to add abstractions or layers. Works with **ponytail**.
+- `foundational-thinking`: before logic: core types, data structures, what concurrent actors share.
+- `redesign-from-first-principles`: fitting a new requirement into an existing design.
+- `attack-the-premise`: two fixes on one premise failed the same gate.
+- `subtract-before-you-add`: sequencing an addition, refactor or rewrite.
+- `minimize-reader-load`: code that is hard to trace.
+- `outcome-oriented-execution`: planned rewrites and migrations with phase boundaries.
+- `experience-first`: product, UX or scope tradeoffs.
+- `exhaust-the-design-space`: a novel interaction or architecture with no precedent.
+- `build-the-lever`: any non-trivial work; build the script, codemod or check that does or proves it.
+
+**Architecture**
+- `model-the-domain`: stateful logic, heavy branching, a shape assumption repeated across files.
+- `boundary-discipline`: validation, error handling, framework adapters.
+- `type-system-discipline`: types and signatures in a typed language (C#, TypeScript, Swift, Rust).
+- `make-operations-idempotent`: commands, lifecycle steps or loops that must survive crashes and retries.
+- `migrate-callers-then-delete-legacy-apis`: a new internal API while old callers exist.
+- `separate-before-serializing-shared-state`: concurrent actors on one file, branch, key or object.
+
+**Verification**
+- `prove-it-works`: before you say done.
+- `fix-root-causes`: debugging.
+- `sequence-verifiable-units`: multi-step work, and how you stack commits and PRs.
+- `test-behavior-not-implementation`: writing, changing or keeping a test.
+- `explain-the-number`: before you measure, and before you trust or report a number.
+
+**Delegation and meta**
+- `guard-the-context-window`: large outputs, long files, fan-out planning.
+- `never-block-on-the-human`: tempted to ask "should I do X?" on reversible work.
+- `encode-lessons-in-structure`: writing the same instruction a second time.
 
 ## Autonomy
 

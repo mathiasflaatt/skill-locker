@@ -54,7 +54,7 @@ Most skills in this repo are copies of work by other authors. Each copy keeps it
 | `extras/.agents/pstack/claude-code.md` (Cursor → Claude Code map for the pstack skills) | Lauren Tan | [cursor/plugins](https://github.com/cursor/plugins/tree/main/pstack/docs/harness/claude-code.md) | MIT | yes |
 | `explaining-visually` | Andreas Rødland | [rodlandA/claude-workflow-kit](https://github.com/rodlandA/claude-workflow-kit/tree/main/skills/explaining-visually) | MIT | no |
 | `grill-with-docs` | Matt Pocock | [mattpocock/skills](https://github.com/mattpocock/skills) | MIT | no |
-| `mathito-mode` (variant of `poteto-mode`, routed to the skills in this repo) | Lauren Tan | [cursor/plugins](https://github.com/cursor/plugins/tree/main/pstack/skills/poteto-mode) | MIT | yes |
+| `mathito-mode` (variant of `poteto-mode`, routed to the skills in this repo; `principles/` from the `principle-*` skills, `playbooks/swarm.md` from `swarm`) | Lauren Tan | [cursor/plugins](https://github.com/cursor/plugins/tree/main/pstack/skills) | MIT | yes (`principles/` no) |
 | `impeccable` (designer agent) | Paul Bakaus | [pbakaus/impeccable](https://github.com/pbakaus/impeccable/tree/main/.agents/skills/impeccable) | Apache-2.0 | no |
 
 ## My own work (MIT, see `LICENSE`)
