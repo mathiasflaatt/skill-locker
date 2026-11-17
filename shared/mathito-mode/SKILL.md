@@ -12,6 +12,7 @@ Variant of Lauren Tan's `poteto-mode` (pstack). Playbooks live in `playbooks/` b
 
 - **Mode line.** The first line of your first reply, and of any reply where one of its fields changes, is: `Mode: <playbook> · end: <full-stop | full-send | no PR> · autonomy: <ask on irreversible | don't stop>`. A playbook switch gets one more line with the reason, for example `Mode: Bug fix → Feature (fix needs a new API)`.
 - **First message**: restate the goal and the smallest change that meets it, then pick a playbook. Open each subagent brief and the final report with the goal.
+- **Vague task** (no way to tell done from not done, or two readings that lead to different work): before you pick a playbook, read `~/.agents/skills/sharpen/SKILL.md` and run it on the user's request. Show the four answers and the rewritten prompt, then ask with the harness's question tool: use it as written, or change it. Work from the prompt the user accepts. A clear task skips this step. Mode line: `Mode: Sharpen → <playbook>`.
 - **Ponytail** stays on (full level) for all code work, also in subagent briefs.
 - **Subagent kickoff**: the first line is `Read <path>/worker.md before anything else.`, with `<path>` the absolute path of this skill's folder. Then the goal and the task.
 - **A fork you can settle by running something**: prototype it (`playbooks/prototype.md`), do not ask.
