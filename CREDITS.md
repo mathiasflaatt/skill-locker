@@ -52,6 +52,8 @@ Most skills in this repo are copies of work by other authors. Each copy keeps it
 | `unslop` | Lauren Tan | [cursor/plugins](https://github.com/cursor/plugins/tree/main/pstack/skills/unslop) | MIT | yes |
 | `why` | Lauren Tan | [cursor/plugins](https://github.com/cursor/plugins/tree/main/pstack/skills/why) | MIT | yes |
 | `extras/.agents/pstack/claude-code.md` (Cursor → Claude Code map for the pstack skills) | Lauren Tan | [cursor/plugins](https://github.com/cursor/plugins/tree/main/pstack/docs/harness/claude-code.md) | MIT | yes |
+| `grill-me` | Matt Pocock | [mattpocock/skills](https://github.com/mattpocock/skills) | MIT | no |
+| `implement` | Matt Pocock | [mattpocock/skills](https://github.com/mattpocock/skills) | MIT | no |
 | `explaining-visually` | Andreas Rødland | [rodlandA/claude-workflow-kit](https://github.com/rodlandA/claude-workflow-kit/tree/main/skills/explaining-visually) | MIT | no |
 | `grill-with-docs` | Matt Pocock | [mattpocock/skills](https://github.com/mattpocock/skills) | MIT | no |
 | `mathito-mode` (variant of `poteto-mode`, routed to the skills in this repo; `principles/` from the `principle-*` skills, `playbooks/swarm.md` from `swarm`) | Lauren Tan | [cursor/plugins](https://github.com/cursor/plugins/tree/main/pstack/skills) | MIT | yes (`principles/` no) |
