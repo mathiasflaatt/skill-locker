@@ -10,8 +10,8 @@ Most skills in this repo are copies of work by other authors. Each copy keeps it
 | `codebase-design` | Matt Pocock | [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/engineering/codebase-design) | MIT | no |
 | `diagnosing-bugs` | Matt Pocock | [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/engineering/diagnosing-bugs) | MIT | no |
 | `domain-modeling` | Matt Pocock | [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/engineering/domain-modeling) | MIT | no |
-| `full-send` | Theo Browne | [t3dotgg/tstack](https://github.com/t3dotgg/tstack/tree/main/skills/full-send) | MIT | yes |
-| `full-stop` | Theo Browne | [t3dotgg/tstack](https://github.com/t3dotgg/tstack/tree/main/skills/full-stop) | MIT | yes |
+| `full-send` (trigger only; the workflow is in `mathito-mode/playbooks/ship.md`) | Theo Browne | [t3dotgg/tstack](https://github.com/t3dotgg/tstack/tree/main/skills/full-send) | MIT | yes |
+| `full-stop` (trigger only; the workflow is in `mathito-mode/playbooks/ship.md`) | Theo Browne | [t3dotgg/tstack](https://github.com/t3dotgg/tstack/tree/main/skills/full-stop) | MIT | yes |
 | `ponytail` | Dietrich Gebert | [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail/tree/main/skills/ponytail) | MIT | no |
 | `grilling` | Matt Pocock | [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/productivity/grilling) | MIT | yes |
 | `handoff` | Matt Pocock | [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/productivity/handoff) | MIT | yes |
@@ -63,6 +63,7 @@ Most skills in this repo are copies of work by other authors. Each copy keeps it
 - `shared/skill-locker/`
 - `shared/fix-architecture-issues/` (runs Matt Pocock's `implement-spec` flow)
 - `shared/linus-review/`
+- `shared/planning/`
 - `shared/review-pr/` (built on `sol-loop` and the tstack `council` skill by Theo Browne)
 - `machines/*/` skills
 - `extras/.agents/AGENTS.md`, `extras/.agents/hooks/`, `extras/.agents/lavish/` (house style for the Lavish skill by Kun Chen)

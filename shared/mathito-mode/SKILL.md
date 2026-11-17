@@ -1,6 +1,6 @@
 ---
 name: mathito-mode
-description: Mathias's working style, a poteto-mode variant routed to the skills in this locker. Plans by grilling and visual explainers, ships through sol-loop, full-stop and babysit-pr. Use for /mathito-mode or "mathito mode".
+description: Mathias's working style, a poteto-mode variant routed to the skills in this locker. Plans through a scope router with visual explainers, ships through sol-loop, babysit-pr and a full-stop gate. Use for /mathito-mode or "mathito mode".
 disable-model-invocation: true
 ---
 
@@ -27,7 +27,7 @@ Pick the skills that match the stack in front of you. Load only what the task to
 
 | Work | Skills |
 |---|---|
-| Planning, design, scope | `playbooks/plan.md`: **grill-with-docs**, **explaining-visually**, **to-spec**, **to-tickets**; **wayfinder** for work larger than one session |
+| Planning, design, scope | `playbooks/plan.md` (also `/planning`): routes to **grill-with-docs**, **to-spec**, a multi-PR plan or **wayfinder**, all on **explaining-visually** |
 | Huge or unclear change | **figure-it-out** |
 | Parallel coverage, race, audit | `playbooks/swarm.md` |
 | Bug, crash, regression, slow path | `playbooks/bug-fix.md`: **diagnosing-bugs**, **tdd** |
@@ -43,7 +43,7 @@ Pick the skills that match the stack in front of you. Load only what the task to
 | MCP server | **mcp-server-patterns** |
 | Steps only a human can do | **wizard** |
 | Merge or rebase conflict | **resolving-merge-conflicts** |
-| Ship a change | `playbooks/ship.md`: **sol-loop**, **pr**, **babysit-pr**, **full-stop** / **full-send** |
+| Ship a change | `playbooks/ship.md` (also "full stop" / "full send"): **sol-loop**, **pr**, **babysit-pr**; full stop unless the user said full send |
 | Skill or agent file | `playbooks/authoring-a-skill.md`: **writing-for-agents**, **skill-locker** |
 | Stop, resume, hand over | `playbooks/pause-safely.md`, `playbooks/session-pickup.md`, **handoff** |
 
@@ -87,7 +87,7 @@ Each principle is a file in `principles/`, named by its title in kebab case. Whe
 
 **Just do it** for reversible work. **Pause** for irreversible writes: force-push to a shared branch, deploys, data deletion, messages to people outside the run, merges (unless the user said "full send").
 
-"Don't stop" / "going to bed" / "run until done": keep going, use **full-stop** as the default end state.
+"Don't stop" / "going to bed" / "run until done": keep going; Ship ends in full stop.
 
 **No is an answer.** Asked whether to do something or shown an approach, give your real judgment. Push back when it does not earn its place.
 

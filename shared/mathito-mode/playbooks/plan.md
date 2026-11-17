@@ -1,12 +1,40 @@
 ### Plan
 
-**You own the plan, not the code. The plan is the deliverable. Do not implement.**
+**You own the plan, not the code. The plan is the deliverable. Do not implement.** The `planning` skill and mathito-mode both run this file.
 
-1. One or two files with an obvious approach: skip the plan, say so, go to Feature or Bug fix.
-2. Settle what a run can settle by prototype (`prototype.md`) before you ask.
-3. **Grill.** Load **grill-with-docs** (it loads **grilling** and **domain-modeling**). Ask only product or preference calls no run can settle. Record terms in the glossary and hard-to-reverse decisions as ADRs as you go.
-4. **Show.** Load **explaining-visually**. Write one page per topic with `<h1 data-mode="plan">`: what changes and why, today versus after, the steps (one commit or one PR each), the dependency graph (which PRs branch from trunk, which wait, the files each touches), and where in the code. Put each open question on the page as a `.q`, not in chat. Run the comment loop until all `.q` are answered.
-5. **Verification per step.** Each step names its unit check, its live check on the real surface (scenario + pass predicate), and for perf work the metric and trunk baseline. Tests alone are not verification.
-6. **Approve.** Wait for `APPROVE` from the page or an explicit go in chat. Then turn the plan into **to-spec** (one PR) or **to-tickets** (many). Work larger than one session: **wayfinder** instead.
+## 1. Route
 
-**Reply:** the page URL, the steps in landing order with dependencies, what stays unproven.
+One or two files with an obvious approach: skip the plan, say so, go to Feature or Bug fix.
+
+Otherwise size the scope, then ask the user to pick the route with the harness's question tool (`AskUserQuestion` in Claude Code, `ask_user` in Copilot CLI), your recommendation first, each option with one line on why it fits or not:
+
+| Route | Scope | Output |
+|---|---|---|
+| **grill-with-docs** | An idea or design still loose. The user's thinking needs a stress test before anything is written. | Settled decisions, glossary terms, ADRs |
+| **to-spec** | One PR's worth, already discussed. | One spec on the issue tracker |
+| **Multi-PR plan** (section 3) | Several PRs or phases, one session can hold it. | A plan page with PRs, dependencies, verification |
+| **wayfinder** | Bigger than one session, wrapped in fog. | A map of decision tickets on the issue tracker |
+
+Routes chain: a loose idea runs grill-with-docs first, then the route its result fits. Put the chosen route in the mode line: `Mode: Plan (grill-with-docs → to-spec)`.
+
+## 2. Rules for every route
+
+- **Visual.** Load **explaining-visually** and keep one page per topic, `<h1 data-mode="plan">`. Each route shows its work there, not in chat:
+  - grill-with-docs: each grill question is a `.q` on the page, recommended answer marked `rec`; decisions and new glossary terms land on the page as they settle.
+  - to-spec: the spec as a page (what changes and why, today versus after, steps, where in the code) before you publish it.
+  - Multi-PR plan: section 3.
+  - wayfinder: the map (destination, decision tickets, which waits on which) as a drawing that links each ticket.
+
+  Run the page's comment loop until every `.q` is answered.
+- **Planner model.** Subagents that plan, design, research for the plan, or review it run one tier above normal work: in Claude Code `model: "fable"`; if the schema or the account rejects it, `model: "opus"` with `effort: "xhigh"`. In Copilot, the newest top-tier model. Name the model in the brief and the report. Implementation after approval goes back to AGENTS.md's normal choice.
+- **Settle by running.** A question a prototype can answer goes to `prototype.md`, not to the user. Ask only product or preference calls.
+- **Approve.** Wait for `APPROVE` from the page or a clear go in chat. Then publish (spec, tickets, map) or hand to the playbook that builds it. Execution starts only on the user's go.
+
+## 3. Multi-PR plan
+
+1. Open with what changes, the PR ids in landing order, and the dependency graph: which PRs branch from trunk, which wait for which, and the files each may touch.
+2. One section per PR. One PR is one change with its own evidence (`sequence-verifiable-units`). Each has tick-off boxes (`data-check`) for what it depends on, the files it edits, the one change it builds, the result you see, and its verification.
+3. Tests alone are not verification. A PR is verified when its unit, live and (for perf work) perf boxes are all checked. A live box drives the real surface with a scenario and a pass predicate. A perf box names the metric, the probe, the trunk baseline measured first, and the number that fails.
+4. After approval: **to-tickets** for the PRs, or **implement-spec** to build them.
+
+**Reply:** the route, the page URL, what was published or approved, what stays unproven.
