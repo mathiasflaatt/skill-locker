@@ -1,12 +1,13 @@
 ---
 name: sol-loop
-description: Review a change in a loop until it is approved, with one GPT Sol reviewer at high effort. A 3-provider council runs only when asked. Use when the user says "sol loop" or "council", asks to review and fix their own branch, PR, or work in progress, or asks for a review report on local changes. For feedback on a PR without fixing it, use review-pr.
+description: Review a change in a loop until it is approved, with one GPT Sol reviewer at high effort (GPT Astra when the diff changes UI). A 3-provider council runs only when asked. Use when the user says "sol loop" or "council", asks to review and fix their own branch, PR, or work in progress, or asks for a review report on local changes. For feedback on a PR without fixing it, use review-pr.
 ---
 
 # sol-loop
 
 Review a change in rounds and fix between rounds, until the reviewer
-approves. One GPT Sol seat at high effort reviews the whole diff. The
+approves. One GPT Sol seat at high effort reviews the whole diff, or a
+GPT Astra seat when the diff changes UI. The
 council (three providers plus Haiku hot spots) is expensive: it runs only
 when the user says "council" or a caller skill (such as `review-pr`) asks
 for it.
@@ -18,8 +19,8 @@ and push back with evidence.
 
 | Mode | When | Whole-diff seats | Hot-spot seats |
 | --- | --- | --- | --- |
-| default | any review | Sol | none |
-| council | user says "council", or a caller skill asks for it | Sol, Sonnet, Grok | ≤3 Haiku |
+| default | any review | Sol, or Astra for a UI diff | none |
+| council | user says "council", or a caller skill asks for it | Sol (or Astra), Sonnet, Grok | ≤3 Haiku |
 | report | user wants a review with no fixes | as default or council | as default or council |
 
 A **one-way door** is a change that is hard to undo after it ships: a
@@ -33,10 +34,20 @@ and ask the user.
 Report mode runs steps 1–3 once, fixes nothing, and replies in the report
 format of `rubric.md`.
 
-Seats use the newest model of each family in the `task` tool's model list:
-Sol (`gpt-6.1-sol`, `reasoning_effort: "high"`), Sonnet (`claude-sonnet-5.5`), Grok (`grok-4.7`),
-Haiku (`claude-haiku-5.5`). Use a version the user names. If a seat's model
-is not available, report the blocker; a seat runs only on its own family.
+Seats and models:
+
+- **Sol** (`gpt-6.2-sol`, `reasoning_effort: "high"`): the whole-diff seat.
+- **Astra** (`gpt-6.2-astra`, `reasoning_effort: "high"`): takes the Sol
+  seat when the diff changes UI: components, views, screens, styles,
+  markup or templates (for example `.tsx`, `.jsx`, `.vue`, `.svelte`,
+  `.css`, `.html`, `.razor`, `.xaml`, SwiftUI views). The seat id stays `S`.
+- **Sonnet** (`claude-sonnet-5.5`), **Grok** (`grok-4.7`), **Haiku**
+  (`claude-haiku-5.5`): council only.
+
+Use a version the user names. If the listed version is not in the tool's
+model list, use the newest of that family and say so. If Astra is missing,
+Sol takes the seat; say so. Any other missing seat is a blocker to report;
+a seat runs only on its own family.
 
 ## Budget
 
@@ -96,7 +107,7 @@ hunk (docs, renames, formatting) gets no Haiku seat.
 
 Start every seat in one response with the `task` tool: `agent_type:
 "code-review"`, `mode: "background"`, `model` set per seat. Set `reasoning_effort: "high"`
-on the Sol seat. Elsewhere
+on the Sol or Astra seat. Elsewhere
 (Claude Code, Codex, an Orca terminal), use native subagents on the same
 models. Save each `agent_id`. Record model and effort only if exposed.
 
@@ -105,7 +116,7 @@ notice, then read each result once (`read_agent`). Timeout, error, or no
 reply is not approval. On a failed seat: cancel, verify stop, restart it
 with the ledger.
 
-Ids are stable per seat: `S` Sol, `C` Sonnet, `G` Grok, `H1`–`H3` Haiku.
+Ids are stable per seat: `S` Sol or Astra, `C` Sonnet, `G` Grok, `H1`–`H3` Haiku.
 
 Whole-diff brief (Sol; Sonnet and Grok in council):
 
@@ -166,7 +177,9 @@ evidence.
 - Disagree: say why, with evidence (file:line, test, output).
 - Out of scope or nit: decline in one line. List as follow-up.
 
-Update the ledger. Re-run checks and `git diff --shortstat <base>`. If
+Update the ledger. Re-run checks and `git diff --shortstat <base>`. When
+the same check fails twice after fixes, run the Fable review from the
+`mathito-mode` skill ("Two red runs") before a third fix. If
 review grew the diff, cut first. Do not agree just to end the loop.
 
 ## 5. Next round

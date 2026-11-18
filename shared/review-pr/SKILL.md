@@ -78,8 +78,8 @@ Depth follows the rating; apply every row that matches:
 
 | Rating | Depth |
 | --- | --- |
-| gate closed | sol-loop default: one Sol seat (`gpt-6.1-sol`, high effort), no hot spots, no blast seat |
-| gate open | council: Sol, Sonnet, Grok, plus ≤3 Haiku hot spots |
+| gate closed | sol-loop default: one Sol seat (Astra for a UI diff; models per sol-loop "Modes"), high effort, no hot spots, no blast seat |
+| gate open | council: Sol (or Astra), Sonnet, Grok, plus ≤3 Haiku hot spots |
 | gate open and one-way door | ≤5 Haiku hot spots; name the one fact the merge is safe because of, and prove it by running code (blast-radius steps 2 and 5) |
 | gate open and wide or public blast | add a blast seat (`claude-sonnet-5.5`) |
 
