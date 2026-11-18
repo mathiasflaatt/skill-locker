@@ -35,16 +35,16 @@ EOF
 
 # Print "name<TAB>path" for each skill this machine uses. Machine skills override shared skills.
 repo_skills() {
-  local -A seen=()
+  local seen=$'\n'
   local d name
   for d in "$REPO/machines/$MACHINE"/*/ "$REPO/shared"/*/; do
     [[ -f "$d/SKILL.md" ]] || continue
     name="$(basename "$d")"
-    if [[ -n "${seen[$name]:-}" ]]; then
+    if [[ "$seen" == *$'\n'"$name"$'\n'* ]]; then
       echo "warning: '$name' is in shared/ and machines/$MACHINE/; using the machine copy" >&2
       continue
     fi
-    seen[$name]=1
+    seen+="$name"$'\n'
     printf '%s\t%s\n' "$name" "${d%/}"
   done
 }
@@ -67,10 +67,10 @@ ensure_link() { # <link path> <target> <backup label>
 
 cmd_link() {
   mkdir -p "$AGENTS_DIR" "$CLAUDE_DIR"
-  local -A wanted=()
+  local wanted=$'\n'
   local name path link
   while IFS=$'\t' read -r name path; do
-    wanted[$name]=1
+    wanted+="$name"$'\n'
     ensure_link "$AGENTS_DIR/$name" "$path" agents
     ensure_link "$CLAUDE_DIR/$name" "$AGENTS_DIR/$name" claude
   done < <(repo_skills)
@@ -79,7 +79,7 @@ cmd_link() {
   for link in "$AGENTS_DIR"/* "$CLAUDE_DIR"/*; do
     [[ -L "$link" ]] || continue
     name="$(basename "$link")"
-    [[ -n "${wanted[$name]:-}" ]] && continue
+    [[ "$wanted" == *$'\n'"$name"$'\n'* ]] && continue
     case "$(readlink "$link")" in
       "$REPO"/*|"$AGENTS_DIR"/*) rm "$link"; echo "unlinked $link" ;;
     esac
@@ -93,10 +93,10 @@ cmd_link() {
 extras_for() { [[ -f "$1" ]] && grep -vE '^\s*(#|$)' "$1" || true; }
 
 link_extras() {
-  local -A wanted=()
+  local wanted=$'\n'
   local rel list
   while read -r rel; do
-    wanted[$rel]=1
+    wanted+="$rel"$'\n'
     if [[ ! -e "$REPO/extras/$rel" ]]; then
       echo "warning: extra '$rel' is in $EXTRAS_LIST but not in extras/" >&2
       continue
@@ -108,7 +108,7 @@ link_extras() {
   # Remove links to extras that this machine no longer uses.
   for list in "$REPO"/machines/*/extras; do
     while read -r rel; do
-      [[ -n "${wanted[$rel]:-}" ]] && continue
+      [[ "$wanted" == *$'\n'"$rel"$'\n'* ]] && continue
       if [[ -L "$HOME/$rel" && "$(readlink "$HOME/$rel")" == "$REPO/extras/$rel" ]]; then
         rm "$HOME/$rel"; echo "unlinked $HOME/$rel"
       fi
