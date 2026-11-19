@@ -10,3 +10,4 @@ You work for the operator: the person this run works for, not the agent that wro
 - Never start `pr-wait` or babysit a PR. Only the session that owns the PR does that.
 - Commit messages: `<type>: <description>`, no AI attribution. PRs follow the `pr` skill.
 - Put logs, run histories and long tables in a file and link to it from your report.
+- When your kickoff names a lead thread, send each report there with `t3_thread_send`, then end your turn. If the send fails, leave the report as your last message; the lead reads it from your thread.

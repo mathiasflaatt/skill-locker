@@ -12,13 +12,26 @@ Prefer `edit`. Script (`sed`/python) OK for many-place/many-file changes; fail o
 
 # Subagent delegation
 
-- Delegate with native inline subagents (Copilot `task`, Claude Code `Agent`); run them in background mode and act on the completion notification.
+- Delegate with native inline subagents (Copilot `task`, Claude Code `Agent`); run them in background mode and act on the completion notification. In T3 Code, a lead that coordinates work across turns follows "Leading long runs in T3 Code" below instead.
 - Give each parallel implementer its own `git worktree add` checkout and pass it the absolute path. Reviewers read the committed diff.
 - An agent that implements in its own worktree cleans up when it is done, so the disk does not fill. Before it starts Docker (Aspire, compose, Testcontainers), it records `docker ps -aq` and `docker volume ls -q`. When its work is committed, it stops its stack (`aspire stop`, `docker compose down -v`), removes the containers and volumes it made (`docker rm -f`, `docker volume rm`; other agents can start Docker at the same time, so a new item must also match its run by name, label or mount path), and removes its worktree with `git -C <main checkout> worktree remove <path>` (the branch keeps the commits). It does not touch containers, volumes or worktrees it did not make. It reports what it removed. If the agent stops before cleanup, the parent does the cleanup.
 - Integrate each reviewed slice through a merger subagent: it merges into the integration branch, resolves conflicts, runs the verify gate, and reports the merge commit. Run one merger at a time.
 - For a full ownership handoff, use the `handoff` skill. Use the Orca CLI only when the user asks for Orca; load `orca-cli` first and follow its guide.
 - Set `model` on every subagent spawn to the newest version of the chosen model family in the tool's model list (for example `gpt-6-luna`, not `gpt-5.6-luna`). The harness default for `explore` is an older version, so an omitted `model` does not give the newest version.
 - When `SKILL_LOCKER_ASPIRE_MAX` in `~/.config/skill-locker/local.env` is a positive integer, at most that many agents may run the Aspire stack (`aspire start`, Docker/startup tests) at once. Queue further Aspire-running slices. Agents doing only build/unit tests may run alongside. When the variable is unset, do not add a cap.
+
+# Leading long runs in T3 Code
+
+A lead that coordinates workers across turns (implement-spec, a swarm, fix rounds) is _event-driven_: it acts on a message, then ends its turn. T3 delivers queued messages, from workers and from the user, only between runs. A run that stays open never sees them, and a user steer that breaks into it cancels the native subagents running inside it.
+
+- One lead owns the whole run and launches every worker itself. No separate orchestrator layer.
+- Start each worker that outlives the current turn as a top-level thread: `t3_thread_launch` with `message` set (no `message` makes an idle thread), the lead's thread id in the brief, and the order to report with `t3_thread_send`. Use native subagents only for work the lead waits for in the same turn.
+- After you launch or send, end the turn. Anything that holds the run open blocks the queue: an attached shell, `sleep`, a wait or poll loop, `t3_thread_wait`, running background subagents.
+- Recurring status: `schedule_task` on this thread, `everyMs`. Delete it when the run ends.
+- On every wake, `t3_queue list` first and handle each queued report before new work.
+- After each launch, `t3_thread_read` the new thread: confirm a run started and every brief section has content.
+- To change a busy worker's current work, `t3_thread_send` with `mode: "steer"`. `queue` waits until its run ends.
+- Before you state a fact about a machine (ssh, docker, disk, load), run a command that shows it.
 
 # Feedback loops use Lavish
 

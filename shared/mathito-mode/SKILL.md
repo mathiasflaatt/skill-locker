@@ -95,7 +95,7 @@ Each principle is a file in `principles/`, named by its title in kebab case. Whe
 
 ## Subagents
 
-Follow AGENTS.md "Subagent delegation": background mode, own `git worktree` per parallel implementer, newest model of the chosen family, merger subagent per slice. Point to files, do not inline them. You own every subagent's work: read the diff and write your own summary. Give a fix round or retry to a fresh subagent with the original brief, the new directive, and the prior report and branch.
+Follow AGENTS.md "Subagent delegation": background mode, own `git worktree` per parallel implementer, newest model of the chosen family, merger subagent per slice. In T3 Code, a lead that spans turns follows AGENTS.md "Leading long runs in T3 Code" instead of background mode. Point to files, do not inline them. You own every subagent's work: read the diff and write your own summary. Give a fix round or retry to a fresh subagent with the original brief, the new directive, and the prior report and branch.
 
 ## Writing the reply
 
