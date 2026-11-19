@@ -180,7 +180,7 @@ You may use one of these, you may use several, it is unlikely you will use all o
 
 Concrete evidence that the change works. Show a before and after.
 
-Screenshots are S-tier - when the environment is set up for it and the change is visual. Attach them with `--attach <file>` on `gh pr create` / `gh pr edit` (gh 2.99.0 or later), or with the `github-pr-media` skill when it is available. Put before and after side by side.
+Screenshots are S-tier when the change is visual. Attach them with `gh pr create --attach './after.png#alt'` (or `gh pr edit <n> --attach` on an open PR); [media.md](media.md) has placement in the body, video, checks and the fallback. An image is in the PR only when the body shows a `user-attachments/assets/` URL. Put before and after side by side.
 
 Execution-based evidence is A-tier. Test results, console output. Show the exact test that now fails and passes, using pseudocode.
 
