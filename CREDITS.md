@@ -27,6 +27,7 @@ Most skills in this repo are copies of work by other authors. Each copy keeps it
 | `resolving-merge-conflicts` | Matt Pocock | [mattpocock/skills](https://github.com/mattpocock/skills/tree/153fc1b/skills/engineering/resolving-merge-conflicts) (since removed upstream) | MIT | no |
 | `retro` | Matt Pocock | [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/engineering/retro) | MIT | no |
 | `sol-loop` | Theo Browne; council mode from `council` by Theo Browne; spec/standards axes and smell baseline from `code-review` by Matt Pocock (`LICENSE-code-review`); lenses and report format from `ponytail-review` by Dietrich Gebert (`LICENSE-ponytail`) | [t3dotgg/tstack](https://github.com/t3dotgg/tstack/tree/main/skills/sol-loop), [t3dotgg/tstack council](https://github.com/t3dotgg/tstack/tree/main/skills/council), [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/engineering/code-review), [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail/tree/main/skills/ponytail-review) | MIT | yes |
+| `takeover` | Theo Browne | [t3dotgg/tstack](https://github.com/t3dotgg/tstack/tree/main/skills/takeover) | MIT | no |
 | `tdd` | Matt Pocock | [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/engineering/tdd) | MIT | no |
 | `teach` | Matt Pocock | [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/productivity/teach) | MIT | no |
 | `to-spec` | Matt Pocock | [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/engineering/to-spec) | MIT | yes |
